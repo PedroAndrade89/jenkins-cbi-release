@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    stages {
+        stage('Integrity Check') {
+            steps {
+                echo 'Checking code integrity...'
+                // Add your integrity check commands here, e.g., linting
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("your-image-name")
+                }
+            }
+        }
+        stage('Vulnerability Scanning') {
+            agent {
+                docker {
+                    image 'your-account-id.dkr.ecr.your-region.amazonaws.com/jenkins-trivy-agent:latest'
+                    registryUrl 'https://your-account-id.dkr.ecr.your-region.amazonaws.com'
+                    registryCredentialsId 'your-jenkins-ecr-credentials-id'
+                }
+            }
+            steps {
+                script {
+                    // Replace 'your-image-name' with the actual image name
+                    def trivyScan = sh(script: "trivy image --exit-code 1 --severity HIGH,CRITICAL your-image-name", returnStatus: true)
+                    if (trivyScan != 0) {
+                        error("High or critical vulnerabilities found!")
+                    }
+                }
+            }
+        }
+        stage('Report Vulnerabilities') {
+            agent {
+                docker {
+                    image 'your-account-id.dkr.ecr.your-region.amazonaws.com/jenkins-trivy-agent:latest'
+                    registryUrl 'https://your-account-id.dkr.ecr.your-region.amazonaws.com'
+                    registryCredentialsId 'your-jenkins-ecr-credentials-id'
+                }
+            }
+            steps {
+                sh 'trivy image --format json -o vulnerability-report.json your-image-name'
+                archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: true
+            }
+        }
+    }
+}
