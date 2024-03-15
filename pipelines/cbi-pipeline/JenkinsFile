@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Vulnerability Scanning') {
             agent {
-                label 'docker-trivy'  // Specify a label to run this stage on an agent with this label
+                label 'trivy'  // Specify a label to run this stage on an agent with this label
             }
             steps {
                 script {
@@ -43,7 +43,7 @@ pipeline {
         }
         stage('Report Vulnerabilities') {
             agent {
-                label 'docker-trivy'  // Specify a label to run this stage on an agent with this label
+                label 'trivy'  // Specify a label to run this stage on an agent with this label
             }
             steps {
                 sh 'trivy image --format json -o vulnerability-report.json test'
