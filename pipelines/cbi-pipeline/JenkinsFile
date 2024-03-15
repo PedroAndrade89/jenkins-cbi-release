@@ -1,6 +1,11 @@
 pipeline {
     agent any
     stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'your-git-credentials', url: 'https://github.com/PedroAndrade89/cbi-release-exercise.git'
+            }
+        }
         stage('Integrity Check') {
             steps {
                 echo 'Checking code integrity...'
@@ -16,7 +21,7 @@ pipeline {
         }
         stage('Vulnerability Scanning') {
             agent {
-                docker {
+                trivy {
                     image 'your-account-id.dkr.ecr.your-region.amazonaws.com/jenkins-trivy-agent:latest'
                     registryUrl 'https://your-account-id.dkr.ecr.your-region.amazonaws.com'
                     registryCredentialsId 'your-jenkins-ecr-credentials-id'
@@ -24,10 +29,16 @@ pipeline {
             }
             steps {
                 script {
-                    // Replace 'your-image-name' with the actual image name
-                    def trivyScan = sh(script: "trivy image --exit-code 1 --severity HIGH,CRITICAL your-image-name", returnStatus: true)
-                    if (trivyScan != 0) {
-                        error("High or critical vulnerabilities found!")
+                    // Use Trivy to scan Docker image for vulnerabilities
+                    def trivyReport = sh(script: 'trivy --format json -o trivy_report.json <image_name>', returnStdout: true)
+                    def vulnerabilities = readJSON file: 'trivy_report.json'
+
+                    // Check for HIGH or CRITICAL vulnerabilities
+                    def highOrCriticalVulnerabilities = vulnerabilities.find { it.Severity in ['HIGH', 'CRITICAL'] }
+
+                    if (highOrCriticalVulnerabilities) {
+                        currentBuild.result = 'FAILURE'
+                        error('New HIGH or CRITICAL vulnerabilities found! Check email for details.')
                     }
                 }
             }
