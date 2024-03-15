@@ -21,11 +21,7 @@ pipeline {
         }
         stage('Vulnerability Scanning') {
             agent {
-                trivy-agent {
-                    image 'your-account-id.dkr.ecr.your-region.amazonaws.com/jenkins-trivy-agent:latest'
-                    registryUrl 'https://your-account-id.dkr.ecr.your-region.amazonaws.com'
-                    registryCredentialsId 'your-jenkins-ecr-credentials-id'
-                }
+                label 'trivy'  // Specify a label to run this stage on an agent with this label
             }
             steps {
                 script {
@@ -45,11 +41,7 @@ pipeline {
         }
         stage('Report Vulnerabilities') {
             agent {
-                any {
-                    image 'your-account-id.dkr.ecr.your-region.amazonaws.com/jenkins-trivy-agent:latest'
-                    registryUrl 'https://your-account-id.dkr.ecr.your-region.amazonaws.com'
-                    registryCredentialsId 'your-jenkins-ecr-credentials-id'
-                }
+                label 'trivy'  // Specify a label to run this stage on an agent with this label
             }
             steps {
                 sh 'trivy image --format json -o vulnerability-report.json your-image-name'
