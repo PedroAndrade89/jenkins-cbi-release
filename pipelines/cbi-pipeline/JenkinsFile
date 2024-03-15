@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'your-git-credentials', url: 'https://github.com/PedroAndrade89/cbi-release-exercise.git'
+                git branch: 'main', credentialsId: 'github-pedro', url: 'https://github.com/PedroAndrade89/cbi-release-exercise.git'
             }
         }
         stage('Integrity Check') {
@@ -15,7 +15,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("your-image-name")
+                    docker.build("test")
                 }
             }
         }
