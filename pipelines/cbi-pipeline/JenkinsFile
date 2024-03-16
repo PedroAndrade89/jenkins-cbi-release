@@ -22,7 +22,7 @@ pipeline {
                 script {
                    def dockerfileDir = 'docker-app'
                    def dockerfile = "${dockerfileDir}/Dockerfile"
-                   docker.build("test", "-f ${dockerfile} ${dockerfileDir}")
+                   docker.build(params.image_name, "-f ${dockerfile} ${dockerfileDir}")
 
                    buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                 }
@@ -34,7 +34,7 @@ pipeline {
                 script {
 
                     // Use Trivy to scan Docker image for vulnerabilities
-                    sh 'trivy image -f json -o trivy_report.json test'
+                    sh 'trivy image -f json -o trivy_report.json ${image_name}'
                     def trivyReportJson = readFile 'trivy_report.json'
                     def vulnerabilities = readJSON text: trivyReportJson
 
@@ -65,7 +65,7 @@ pipeline {
         }
         stage('Report Vulnerabilities') {
             steps {
-                sh 'trivy image --format json vulnerability-report.json test'
+                sh 'trivy image --format json vulnerability-report.json ${image_name}'
                 archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: true
             }
         }
