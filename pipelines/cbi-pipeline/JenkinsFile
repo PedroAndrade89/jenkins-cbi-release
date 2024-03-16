@@ -11,12 +11,14 @@ pipeline {
                 git branch: params.git_branch, credentialsId: 'github-pedro', url: params.git_url
             }
         }
+
         stage('Integrity Check') {
             steps {
                 echo 'Checking code integrity...'
                 // Add your integrity check commands here, e.g., linting
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -28,6 +30,7 @@ pipeline {
                 }
             }
         }
+
         stage('Vulnerability Scanning') {
 
             steps {
@@ -63,10 +66,26 @@ pipeline {
                 }
             }
         }
+
         stage('Report Vulnerabilities') {
             steps {
                 sh "trivy image --format json vulnerability-report.json ${params.image_name}"
                 archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: true
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                script {
+                    // Login to ECR
+                    sh "aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+
+                    // Tag the Docker image with the ECR repository URI
+                    sh "docker tag ${params.image_name}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+                    // Push the Docker image to ECR
+                    sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                }
             }
         }
     }
