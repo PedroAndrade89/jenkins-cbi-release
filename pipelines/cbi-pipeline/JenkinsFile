@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'trivy-agent'
+        label 'jenkins-slave'
     }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
