@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github-pedro', url: 'https://github.com/PedroAndrade89/cbi-release-exercise.git'
+                git branch: ${git_branch}, credentialsId: 'github-pedro', url: ${git_url}
             }
         }
         stage('Integrity Check') {
@@ -23,6 +23,8 @@ pipeline {
                    def dockerfileDir = 'docker-app'
                    def dockerfile = "${dockerfileDir}/Dockerfile"
                    docker.build("test", "-f ${dockerfile} ${dockerfileDir}")
+
+                   buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                 }
             }
         }
@@ -30,10 +32,11 @@ pipeline {
 
             steps {
                 script {
-                    // Use Trivy to scan the Docker image for vulnerabilities
+
+                    // Use Trivy to scan Docker image for vulnerabilities
                     sh 'trivy image -f json -o trivy_report.json test'
                     def trivyReportJson = readFile 'trivy_report.json'
-                    def trivyReport = readJSON text: trivyReportJson
+                    def vulnerabilities = readJSON text: trivyReportJson
 
                     // Initialize a flag to indicate if high or critical vulnerabilities are found
                     def hasHighOrCriticalVulnerabilities = false
@@ -70,20 +73,4 @@ pipeline {
 }
 
 
-
-
-
-
-
-// Use Trivy to scan Docker image for vulnerabilities
-//                     def trivyReport = sh(script: 'trivy image -f json -o trivy_report.json test', returnStdout: true)
-//                     def vulnerabilities = readJSON file: 'trivy_report.json'
-//
-//                     // Check for HIGH or CRITICAL vulnerabilities
-//                     def highOrCriticalVulnerabilities = vulnerabilities.find { it.Severity in ['HIGH', 'CRITICAL'] }
-//
-//                     if (highOrCriticalVulnerabilities) {
-//                         currentBuild.result = 'FAILURE'
-//                         error('New HIGH or CRITICAL vulnerabilities found! Check email for details.')
-//                     }
 
