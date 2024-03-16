@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    options {
+        timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
+    }
     stages {
         stage('Checkout') {
             steps {
