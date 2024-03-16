@@ -36,7 +36,7 @@ pipeline {
                     // Use Trivy to scan Docker image for vulnerabilities
                     sh "trivy image -f json -o trivy_report.json ${params.image_name}"
                     def trivyReportJson = readFile 'trivy_report.json'
-                    def vulnerabilities = readJSON text: trivyReportJson
+                    def trivyReport = readJSON text: trivyReportJson
 
                     // Initialize a flag to indicate if high or critical vulnerabilities are found
                     def hasHighOrCriticalVulnerabilities = false
