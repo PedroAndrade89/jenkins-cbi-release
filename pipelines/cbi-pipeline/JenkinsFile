@@ -30,20 +30,24 @@ pipeline {
 
             steps {
                 script {
-                    // Use Trivy to scan Docker image for vulnerabilities
+                    // Use Trivy to scan the Docker image for vulnerabilities
                     sh 'trivy image -f json -o trivy_report.json test'
                     def trivyReportJson = readFile 'trivy_report.json'
-                    def vulnerabilities = readJSON text: trivyReportJson
+                    def trivyReport = readJSON text: trivyReportJson
 
                     // Initialize a flag to indicate if high or critical vulnerabilities are found
                     def hasHighOrCriticalVulnerabilities = false
 
-                    // Iterate over each vulnerability in the report
-                    vulnerabilities.each { report ->
-                        report.Vulnerabilities?.each { vulnerability ->
-                            if (vulnerability.Severity in ['HIGH', 'CRITICAL']) {
-                                // Set the flag to true if a high or critical vulnerability is found
-                                hasHighOrCriticalVulnerabilities = true
+                    // Iterate over each result in the Trivy report
+                    trivyReport.Results.each { result ->
+                        // Check if the result contains a 'Vulnerabilities' key and it's not null
+                        if (result.Vulnerabilities) {
+                            // Iterate over each vulnerability in the result
+                            result.Vulnerabilities.each { vulnerability ->
+                                if (vulnerability.Severity in ['HIGH', 'CRITICAL']) {
+                                    // Set the flag to true if a high or critical vulnerability is found
+                                    hasHighOrCriticalVulnerabilities = true
+                                }
                             }
                         }
                     }
