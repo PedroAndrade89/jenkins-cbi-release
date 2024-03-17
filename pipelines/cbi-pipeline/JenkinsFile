@@ -85,7 +85,7 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 script {
-                    docker.withRegistry("https://${params.ecr_uri}, 'ecr:us-east-1:jenkins-ecr-access') {
+                    docker.withRegistry("https://${params.ecr_uri}", 'ecr:us-east-1:jenkins-ecr-access') {
                         docker_image.push("latest")
                     }
                 }
@@ -94,14 +94,6 @@ pipeline {
     }
 }
 
-//                     // Login to ECR
-//                     sh "aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin ${ecr_uri}"
-//
-//                     // Tag the Docker image with the ECR repository URI
-//                     sh "docker tag ${params.image_name}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-//
-//                     // Push the Docker image to ECR
-//                     sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
 
 
