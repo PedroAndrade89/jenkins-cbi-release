@@ -32,17 +32,15 @@ pipeline {
         }
 
         stage('Vulnerability Scanning') {
-
             steps {
                 script {
-
                     // Use Trivy to scan Docker image for vulnerabilities
                     sh "trivy image -f json -o trivy_report.json ${params.image_name}"
                     def trivyReportJson = readFile 'trivy_report.json'
                     def trivyReport = readJSON text: trivyReportJson
 
-                    // Initialize a flag to indicate if high or critical vulnerabilities are found
-                    def hasHighOrCriticalVulnerabilities = false
+                    // Initialize a list to collect high or critical vulnerabilities
+                    def criticalVulnerabilities = []
 
                     // Iterate over each result in the Trivy report
                     trivyReport.Results.each { result ->
@@ -51,15 +49,25 @@ pipeline {
                             // Iterate over each vulnerability in the result
                             result.Vulnerabilities.each { vulnerability ->
                                 if (vulnerability.Severity in ['HIGH', 'CRITICAL']) {
-                                    // Set the flag to true if a high or critical vulnerability is found
-                                    hasHighOrCriticalVulnerabilities = true
+                                    // Add high or critical vulnerabilities to the list
+                                    criticalVulnerabilities << vulnerability
                                 }
                             }
                         }
                     }
 
+                    // Echo collected vulnerabilities
+                    if (criticalVulnerabilities.size() > 0) {
+                        echo "High or Critical Vulnerabilities Found:"
+                        criticalVulnerabilities.each { vulnerability ->
+                            echo "${vulnerability.VulnerabilityID} - ${vulnerability.Severity} - ${vulnerability.Title}"
+                        }
+                    } else {
+                        echo "No high or critical vulnerabilities found."
+                    }
+
                     // Fail the build if any high or critical vulnerabilities are found
-                    if (hasHighOrCriticalVulnerabilities) {
+                    if (criticalVulnerabilities.size() > 0) {
                         currentBuild.result = 'FAILURE'
                         error('New HIGH or CRITICAL vulnerabilities found! Check the Trivy report for details.')
                     }
