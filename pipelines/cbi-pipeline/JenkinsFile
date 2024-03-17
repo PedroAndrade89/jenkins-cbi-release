@@ -24,7 +24,7 @@ pipeline {
                 script {
                    def dockerfileDir = 'docker-app'
                    def dockerfile = "${dockerfileDir}/Dockerfile"
-                   docker.build(params.image_name, "-f ${dockerfile} ${dockerfileDir}")
+                   docker_image = docker.build(params.image_name, "-f ${dockerfile} ${dockerfileDir}")
 
                    buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                 }
@@ -77,7 +77,7 @@ pipeline {
 
         stage('Report Vulnerabilities') {
             steps {
-                sh "trivy image --format json vulnerability-report.json ${params.image_name}"
+                sh "trivy image --format json --ooutput vulnerability-report.json ${params.image_name}"
                 archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: true
             }
         }
@@ -85,14 +85,17 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 script {
-                    // Login to ECR
-                    sh "aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-
-                    // Tag the Docker image with the ECR repository URI
-                    sh "docker tag ${params.image_name}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
-
-                    // Push the Docker image to ECR
-                    sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+                    docker.withRegistry(params.ecr_uri, 'jenkins-ecr-access') {
+                    //docker_image.push("${env.BUILD_NUMBER}")
+                    docker_image.push("latest")
+//                     // Login to ECR
+//                     sh "aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin ${ecr_uri}"
+//
+//                     // Tag the Docker image with the ECR repository URI
+//                     sh "docker tag ${params.image_name}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+//
+//                     // Push the Docker image to ECR
+//                     sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
                 }
             }
         }
