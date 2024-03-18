@@ -8,10 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script{
-                    def branchName = ${env.ref} - "refs/heads/"
-                }
-                git branch: '${branchName}', credentialsId: 'github-pedro', url: params.git_url
+                git branch: "${env.branch_name}", credentialsId: 'github-pedro', url: params.git_url
             }
         }
 
