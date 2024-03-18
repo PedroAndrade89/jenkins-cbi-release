@@ -27,7 +27,8 @@ pipeline {
 
                     def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                     def commitHash = env.GIT_COMMIT
-                    def tag = "${params.image_name}:${env.BRANCH_NAME}.${buildTimeStamp}.${commitHash}"
+                    def normalizedBranchName = env.BRANCH_NAME.replaceAll("/", "-").toLowerCase()
+                    def tag = "${params.image_name}:${normalizedBranchName}.${buildTimeStamp}.${commitHash}".toLowerCase()
 
                     docker_image = docker.build("${tag}", "-f ${dockerfile} ${dockerfileDir}")
 
