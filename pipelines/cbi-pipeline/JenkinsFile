@@ -24,9 +24,15 @@ pipeline {
                 script {
                     def dockerfileDir = 'docker-app'
                     def dockerfile = "${dockerfileDir}/Dockerfile"
+                    def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
+                    def commitHash = env.GIT_COMMIT
+                    echo "${buildTimeStamp}"
+                    echo "${commitHash}"
+
                     docker_image = docker.build(params.image_name, "-f ${dockerfile} ${dockerfileDir}")
 
                     def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
+                    def commitHash =
                 }
             }
         }
