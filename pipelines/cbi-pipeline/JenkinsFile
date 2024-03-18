@@ -14,16 +14,18 @@ pipeline {
 
         stage('Integrity Check') {
             steps {
-                echo 'Checking code integrity...'
-                // Add your integrity check commands here, e.g., linting
+                echo 'Checking Dockerfile integrity...'
+                def dockerfileDir = 'docker-app'
+                def dockerfile = "${dockerfileDir}/Dockerfile"
+                sh '/bin/hadolint -t error ${dockerfile}'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    def dockerfileDir = 'docker-app'
-                    def dockerfile = "${dockerfileDir}/Dockerfile"
+//                     def dockerfileDir = 'docker-app'
+//                     def dockerfile = "${dockerfileDir}/Dockerfile"
 
                     def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                     def commitHash = env.GIT_COMMIT
@@ -40,7 +42,7 @@ pipeline {
             steps {
                 script {
                     // Use Trivy to scan Docker image for vulnerabilities
-                    sh "trivy image -f json --output vulnerability-report.json ${params.image_name}"
+                    sh "trivy image -f json --output vulnerability-report.json ${tag}"
                     def trivyReportJson = readFile 'vulnerability-report.json'
                     def trivyReport = readJSON text: trivyReportJson
 
