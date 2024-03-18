@@ -14,10 +14,12 @@ pipeline {
 
         stage('Integrity Check') {
             steps {
-                echo 'Checking Dockerfile integrity...'
-                def dockerfileDir = 'docker-app'
-                def dockerfile = "${dockerfileDir}/Dockerfile"
-                sh '/bin/hadolint -t error ${dockerfile}'
+                script{
+                    echo 'Checking Dockerfile integrity...'
+                    def dockerfileDir = 'docker-app'
+                    def dockerfile = "${dockerfileDir}/Dockerfile"
+                    sh '/bin/hadolint -t error ${dockerfile}'
+                }
             }
         }
 
