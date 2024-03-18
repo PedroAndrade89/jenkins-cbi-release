@@ -6,23 +6,9 @@ pipeline {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
     }
     stages {
-        stage('Process Branch Name') {
-            steps {
-                script {
-                    // Assuming the GIT_REF variable contains something like "refs/heads/branch-name"
-                    if (env.GIT_REF) {
-                        // Split the ref by '/' and get the last part, which should be the branch name
-                        def branchName = env.GIT_REF.tokenize('/').last()
-                        echo "Branch Name: ${branchName}"
-                    } else {
-                        echo "GIT_REF not found"
-                    }
-                }
-            }
-        }
         stage('Checkout') {
             steps {
-                git branch: "${branchName}", credentialsId: 'github-pedro', url: params.git_url
+                git branch: "${env.BRANCH_NAME}", credentialsId: 'github-pedro', url: params.git_url
             }
         }
 
