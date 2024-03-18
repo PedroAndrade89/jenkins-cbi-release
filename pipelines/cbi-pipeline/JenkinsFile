@@ -91,6 +91,7 @@ pipeline {
                 }
             }
         }
+    }
 // Stage: Notify actors
     post {
         success {
@@ -99,8 +100,6 @@ pipeline {
         failure {
             echo 'Stage: Notify actors - failure'
         }
-    }
-    }
 }
 
 
