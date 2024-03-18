@@ -36,7 +36,7 @@ pipeline {
                 script {
                     // Use Trivy to scan Docker image for vulnerabilities
                     sh "trivy image -f json --output vulnerability-report.json ${params.image_name}"
-                    def trivyReportJson = readFile 'trivy_report.json'
+                    def trivyReportJson = readFile 'vulnerability-report.json'
                     def trivyReport = readJSON text: trivyReportJson
 
                     // Initialize a list to collect high or critical vulnerabilities
@@ -77,7 +77,6 @@ pipeline {
 
         stage('Report Vulnerabilities') {
             steps {
-                //sh "trivy image --format json --output vulnerability-report.json ${params.image_name}"
                 archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: true
             }
         }
