@@ -91,6 +91,15 @@ pipeline {
                 }
             }
         }
+// Stage: Notify actors
+    post {
+        success {
+            echo 'Stage: Notify actors - success'
+        }
+        failure {
+            echo 'Stage: Notify actors - failure'
+        }
+    }
     }
 }
 
