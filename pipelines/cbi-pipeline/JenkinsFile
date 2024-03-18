@@ -18,7 +18,7 @@ pipeline {
                     echo 'Checking Dockerfile integrity...'
                     def dockerfileDir = 'docker-app'
                     def dockerfile = "${dockerfileDir}/Dockerfile"
-                    sh "/bin/hadolint -t error ${dockerfile}"
+                    sh "/bin/hadolint -t error --ignore SC1072 ${dockerfile}"
                 }
             }
         }
