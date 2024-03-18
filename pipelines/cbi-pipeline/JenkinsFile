@@ -16,8 +16,8 @@ pipeline {
             steps {
                 script{
                     echo 'Checking Dockerfile integrity...'
-                    def dockerfileDir = 'docker-app'
-                    def dockerfile = "${dockerfileDir}/Dockerfile"
+                    dockerfileDir = 'docker-app'
+                    dockerfile = "${dockerfileDir}/Dockerfile"
                     sh "/bin/hadolint -t error --ignore SC1072 ${dockerfile}"
                 }
             }
@@ -26,9 +26,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-//                     def dockerfileDir = 'docker-app'
-//                     def dockerfile = "${dockerfileDir}/Dockerfile"
-
                     def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
                     def commitHash = env.GIT_COMMIT
                     def normalizedBranchName = env.BRANCH_NAME.replaceAll("/", "-").toLowerCase()
