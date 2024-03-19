@@ -80,13 +80,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Report Vulnerabilities') {
-            steps {
-                archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: false
-            }
-        }
-
         stage('Push Docker Image to ECR') {
             steps {
                 script {
@@ -96,6 +89,63 @@ pipeline {
                 }
             }
         }
+//         stage('Provision test environment') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Provision test environment'
+//             }
+//         }
+//         stage('Deploy artifact to test') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Deploy artifact to test'
+//             }
+//         }
+//         stage('Perform test') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Perform test'
+//             }
+//         }
+//         stage('Validate infrastructure compliance') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Validate infrastructure compliance'
+//             }
+//         }
+//         stage('Validate exit criteria') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Validate exit criteria'
+//             }
+//         }
+//         stage('Provision production infrastructure') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Provision production infrastructure'
+//             }
+//         }
+//         stage('Deploy artifact to production') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Deploy artifact to production'
+//             }
+//         }
+
     }
 // Stage: Notify actors
     post {
@@ -104,6 +154,9 @@ pipeline {
         }
         failure {
             echo 'Stage: Notify actors - failure'
+        }
+        always {
+            archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: false
         }
     }
 }
