@@ -89,14 +89,6 @@ pipeline {
                 }
             }
         }
-//         stage('Provision test environment') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Provision test environment'
-//             }
-//         }
 //         stage('Deploy artifact to test') {
 //             when {
 //                 branch "main"
@@ -113,28 +105,12 @@ pipeline {
 //                 echo 'Stage: Perform test'
 //             }
 //         }
-//         stage('Validate infrastructure compliance') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Validate infrastructure compliance'
-//             }
-//         }
 //         stage('Validate exit criteria') {
 //             when {
 //                 branch "main"
 //             }
 //             steps {
 //                 echo 'Stage: Validate exit criteria'
-//             }
-//         }
-//         stage('Provision production infrastructure') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Provision production infrastructure'
 //             }
 //         }
 //         stage('Deploy artifact to production') {
