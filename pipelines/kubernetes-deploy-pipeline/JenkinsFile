@@ -1,25 +1,26 @@
 pipeline {
-  agent {
-      label 'jenkins-slave'
-  }
-  options {
-      timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
-  }
-  stages {
-    stage('Checkout') {
-        steps {
-            git branch: "${env.BRANCH_NAME}", credentialsId: 'github-pedro', url: params.git_url
+    agent {
+        label 'jenkins-slave'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "${env.BRANCH_NAME}", credentialsId: 'github-pedro', url: params.git_url
+            }
+        }
+        stage('Install Istio') {
+            steps {
+                // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
+                withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
+                    ansiblePlaybook(
+                        playbook: 'playbooks/istio-install.yml'
+                        // extras: '-e @variables.yml'
+                    )
+                } // This closes the withCredentials block
+            }
         }
     }
-    stage('Install Istio') {
-      steps {
-        // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
-        withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
-        ansiblePlaybook(
-          playbook: 'playbooks/istio-install.yml',
-          //extras: '-e @variables.yml'
-        )
-      }
-    }
-  }
 }
