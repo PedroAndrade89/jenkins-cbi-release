@@ -21,7 +21,7 @@ pipeline {
                     // Explicitly activate the virtual environment before running ansible-playbook
                     sh '''
                     source /home/jenkins-slave/ansible_venv/bin/activate
-                    ansible-playbook playbooks/istio-install.yml
+                    ansible-playbook playbooks/istio-install.yml -vv
                     '''
                 } // This closes the withCredentials block
             }
