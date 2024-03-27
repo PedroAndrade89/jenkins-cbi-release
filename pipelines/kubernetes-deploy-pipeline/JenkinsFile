@@ -18,10 +18,11 @@ pipeline {
             steps {
                 // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
                 withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
-                    ansiblePlaybook(
-                        playbook: 'playbooks/istio-install.yml'
-                        // extras: '-e @variables.yml'
-                    )
+                    sh '''
+                    source /home/jenkins/ansible_venv/bin/activate
+                    ansible --version
+                    ansible-playbook playbooks/istio-install.yml
+                    '''
                 } // This closes the withCredentials block
             }
         }
