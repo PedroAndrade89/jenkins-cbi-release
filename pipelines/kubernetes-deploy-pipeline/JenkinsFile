@@ -2,6 +2,9 @@ pipeline {
     agent {
         label 'jenkins-slave'
     }
+    environment {
+            PATH = "root/ansible-env/ansible_venv/bin:${env.PATH}" // Add Ansible bin directory to PATH
+    }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
     }
