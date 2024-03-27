@@ -16,6 +16,9 @@ pipeline {
         }
         stage('Install Istio') {
             steps {
+                script {
+                    sh 'source /home/jenkins/ansible_venv/bin/activate'
+                }
                 // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
                 withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
                     ansiblePlaybook(
