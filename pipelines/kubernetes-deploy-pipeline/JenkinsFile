@@ -3,7 +3,7 @@ pipeline {
         label 'jenkins-slave'
     }
     environment {
-            PATH = "/home/jenkins/ansible_env/bin:${env.PATH}" // Add Ansible bin directory to PATH
+            PATH = "/home/jenkins-slave/ansible_env/bin:${env.PATH}" // Add Ansible bin directory to PATH
     }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
@@ -18,11 +18,10 @@ pipeline {
             steps {
                 // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
                 withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
-                    // Explicitly activate the virtual environment before running ansible-playbook
-                    sh '''
-                    source /home/jenkins/ansible_venv/bin/activate
-                    ansible-playbook playbooks/istio-install.yml
-                    '''
+                    ansiblePlaybook(
+                        playbook: 'playbooks/istio-install.yml'
+                        // extras: '-e @variables.yml'
+                    )
                 } // This closes the withCredentials block
             }
         }
