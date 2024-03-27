@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${env.BRANCH_NAME}", credentialsId: 'github-pedro', url: params.git_url
+                git branch: "${env.branch_name}", credentialsId: 'github-pedro', url: params.git_url
             }
         }
         stage('Install Istio') {
@@ -19,8 +19,7 @@ pipeline {
                 // Use 'withCredentials' to bind the kubeconfig file stored in Jenkins credentials
                 withCredentials([file(credentialsId: 'nonprod-eks-kubeconf', variable: 'KUBECONFIG')]) {
                     sh '''
-
-                    /home/jenkins-slave/.local/bin/ansible-playbook playbooks/istio-install.yml
+                    "${env.ansible_dir}"/ansible-playbook playbooks/istio-install.yml -vvv
                     '''
                 } // This closes the withCredentials block
             }
