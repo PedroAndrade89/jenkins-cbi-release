@@ -3,9 +3,9 @@ pipeline {
         label 'jenkins-slave'
     }
     environment {
-            PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
-            // Define the name of your secret in AWS Secrets Manager
-            SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconfig"
+        PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
+        // Define the name of your secret in AWS Secrets Manager
+        SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconfig"
     }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
@@ -16,7 +16,7 @@ pipeline {
                 git branch: "${env.branch_name}", credentialsId: 'github-pedro', url: params.git_url
             }
         }
-    stages {
+
         stage('Retrieve Kubeconfig from AWS Secrets Manager') {
             steps {
                 script {
@@ -33,11 +33,13 @@ pipeline {
                 }
             }
         }
-    stage('Install Istio') {
-        steps {
+
+        stage('Install Istio') {
+            steps {
                 sh """
                 ${env.ansible_dir}/ansible-playbook playbooks/istio-install.yml -vvv
                 """
+            }
         }
     }
     post {
