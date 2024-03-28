@@ -4,6 +4,8 @@ pipeline {
     }
     environment {
             PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
+            // Define the name of your secret in AWS Secrets Manager
+            SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconfig"
     }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
@@ -14,34 +16,28 @@ pipeline {
                 git branch: "${env.branch_name}", credentialsId: 'github-pedro', url: params.git_url
             }
         }
-        environment {
-                // Define the name of your secret in AWS Secrets Manager
-                SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconfig"
-        }
+    stages {
+        stage('Retrieve Kubeconfig from AWS Secrets Manager') {
+            steps {
+                script {
+                    // Use the credentials binding plugin to securely inject AWS credentials
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-ecr-access', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        // Retrieve the kubeconfig from AWS Secrets Manager
+                        sh '''
+                        aws secretsmanager get-secret-value --secret-id ${SECRET_NAME} --query SecretString --output text > kubeconfig
+                        '''
 
-        stages {
-            stage('Retrieve Kubeconfig from AWS Secrets Manager') {
-                steps {
-                    script {
-                        // Use the credentials binding plugin to securely inject AWS credentials
-                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-ecr-access', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                            // Retrieve the kubeconfig from AWS Secrets Manager
-                            sh '''
-                            aws secretsmanager get-secret-value --secret-id ${SECRET_NAME} --query SecretString --output text > kubeconfig
-                            '''
-
-                            // Set the KUBECONFIG environment variable for subsequent steps
-                            env.KUBECONFIG = "${WORKSPACE}/kubeconfig"
-                        }
+                        // Set the KUBECONFIG environment variable for subsequent steps
+                        env.KUBECONFIG = "${WORKSPACE}/kubeconfig"
                     }
                 }
             }
-        stage('Install Istio') {
-            steps {
-                    sh """
-                    ${env.ansible_dir}/ansible-playbook playbooks/istio-install.yml -vvv
-                    """
-            }
+        }
+    stage('Install Istio') {
+        steps {
+                sh """
+                ${env.ansible_dir}/ansible-playbook playbooks/istio-install.yml -vvv
+                """
         }
     }
     post {
