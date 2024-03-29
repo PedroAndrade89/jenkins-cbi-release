@@ -5,7 +5,7 @@ pipeline {
     environment {
         PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
         // Define the name of your secret in AWS Secrets Manager
-        SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconfig"
+        SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconf"
     }
     options {
         timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
