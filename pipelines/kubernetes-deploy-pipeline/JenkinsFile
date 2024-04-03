@@ -127,6 +127,7 @@ pipeline {
         archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
       }
     }
+    }
 
     stage('TF Validate') {
       when {
