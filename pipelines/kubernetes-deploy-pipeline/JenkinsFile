@@ -1,5 +1,4 @@
 pipeline {
-
   parameters {
     string(name: 'GREETING', defaultValue: 'Hello', description: 'How do you want to greet?')
     choice(name: 'BRANCH', choices: ['main', 'dev', 'feature'], description: 'Which branch to build?')
@@ -13,50 +12,50 @@ pipeline {
     disableConcurrentBuilds()
     timeout(time: 40, unit: 'MINUTES') // Timeout
   }
+
   agent {
     label 'jenkins-slave'
   }
+
   environment {
     PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
-    // SECRET_NAME will be defined here, but DIR will be set within a stage because it requires script logic
     SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconf" // Define the name of your secret in AWS Secrets Manager
   }
+
   stages {
     stage('Example') {
       steps {
         echo "${params.GREETING}, the chosen branch is ${params.BRANCH}"
       }
     }
+
     stage('Initialize Environment Variables') {
       steps {
         script {
-          // Using Groovy's switch statement to set the DIR environment variable based on the branch name
           env.DIR = "" // Initialize DIR
           switch (env.BRANCH_NAME) {
-          case 'qa':
-            env.DIR = 'terraform/environments/qa'
-            break
-          case 'main':
-            env.DIR = 'terraform/environments/prod'
-            break
-          case 'stage':
-            env.DIR = 'terraform/environments/stage'
-            break
-          default:
-            error "Unknown branch name: ${env.BRANCH_NAME}"
+            case 'qa':
+              env.DIR = 'terraform/environments/qa'
+              break
+            case 'main':
+              env.DIR = 'terraform/environments/prod'
+              break
+            case 'stage':
+              env.DIR = 'terraform/environments/stage'
+              break
+            default:
+              error "Unknown branch name: ${env.BRANCH_NAME}"
           }
         }
       }
     }
+
     stage('Run TFLint') {
       when {
-        expression {
-          env.TFLINT == 'true'
-        }
+        expression { env.TFLINT == 'true' }
       }
       steps {
         script {
-          // Run TFLint
           dir("${env.DIR}") {
             sh 'tflint --format=json > tflint-results.json'
             def tflintResults = readJSON file: 'tflint-results.json'
@@ -70,16 +69,11 @@ pipeline {
 
     stage('Run Checkov') {
       when {
-        expression {
-          env.CHECKOV == 'true'
-        }
+        expression { env.CHECKOV == 'true' }
       }
       steps {
         script {
-          // Initialize flag variable
           def checkovFailed = false
-
-          // Run Checkov
           dir("${env.DIR}") {
             try {
               sh 'checkov -d . --quiet --framework terraform --output json > checkov-results.json'
@@ -95,7 +89,6 @@ pipeline {
               echo "Error running Checkov: ${e.message}"
             }
           }
-          // Archive Checkov results
           if (checkovFailed) {
             archiveArtifacts artifacts: 'terraform/environments/stage/checkov-results.json', onlyIfSuccessful: false
             error("Checkov step failed.")
@@ -106,34 +99,25 @@ pipeline {
 
     stage('Run TFSec') {
       when {
-        expression {
-          env.TFSEC == 'true'
-        }
+        expression { env.TFSEC == 'true' }
       }
       steps {
         script {
-          // Run TFSec
           dir("${env.DIR}") {
             sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
             def tfsecResults = readJSON file: 'tfsec-results.json'
-            if (tfsecResults.results.any {
-                result -> result.severity == "CRITICAL"
-              }) {
+            if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
               error("Critical alerts found by TFSec.")
             }
           }
         }
-        // Archive TFSec results
         archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
       }
-    }
     }
 
     stage('TF Validate') {
       when {
-        expression {
-          params.action == 'create'
-        }
+        expression { params.action == 'create' }
       }
       steps {
         script {
@@ -146,39 +130,40 @@ pipeline {
               ]
             ]) {
               sh """
-              terraform init
-              terraform validate
+                terraform init
+                terraform validate
               """
             }
           }
         }
       }
+    }
 
-      stage('TF Apply') {
-        steps {
-          dir('terraform/environments/stage') {
-            script {
-              withCredentials([
-                [
-                  $class: 'AmazonWebServicesCredentialsBinding',
-                  credentialsId: 'jenkins-automate-user',
-                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]
-              ]) {
-                sh 'terraform plan -out=plan.out'
-                input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
-                sh 'terraform apply plan.out'
-              }
+    stage('TF Apply') {
+      steps {
+        dir('terraform/environments/stage') {
+          script {
+            withCredentials([
+              [
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'jenkins-automate-user',
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+              ]
+            ]) {
+              sh 'terraform plan -out=plan.out'
+              input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
+              sh 'terraform apply plan.out'
             }
           }
         }
       }
-    post {
-      always {
-        cleanWs()
-      }
     }
+  }
+
+  post {
+    always {
+      cleanWs()
     }
   }
 }
