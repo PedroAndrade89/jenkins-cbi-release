@@ -121,10 +121,11 @@ pipeline {
       }
       steps {
         script {
-          dir("${env.DIR}") {
+          dir(env.DIR) {
             withCredentials([
-              [$class: 'AmazonWebServicesCredentialsBinding',
-                credentialsId: params.credential,
+              [
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'jenkins-automate-user',
                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
               ]
@@ -141,7 +142,7 @@ pipeline {
 
     stage('TF Apply') {
       steps {
-        dir('terraform/environments/stage') {
+        dir(env.DIR) {
           script {
             withCredentials([
               [
