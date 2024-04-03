@@ -21,7 +21,7 @@ pipeline {
                         case 'qa':
                             env.DIR = 'terraform/environments/qa'
                             break
-                        case 'prod':
+                        case 'main':
                             env.DIR = 'terraform/environments/prod'
                             break
                         case 'stage':
