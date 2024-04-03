@@ -3,6 +3,10 @@ pipeline {
     parameters {
         string(name: 'GREETING', defaultValue: 'Hello', description: 'How do you want to greet?')
         choice(name: 'BRANCH', choices: ['main', 'dev', 'feature'], description: 'Which branch to build?')
+        booleanParam(name: 'TFLINT', defaultValue : true, description: "Setup Cloudwatch logging?")
+        booleanParam(name: 'CHECKOV', defaultValue : true, description: "Setup Cloudwatch logging?")
+        booleanParam(name: 'TFSEC', defaultValue : true, description: "Setup Cloudwatch logging?")
+        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
     }
 
     options {
@@ -44,162 +48,118 @@ pipeline {
                 }
             }
         }
-//         stage('Run TFLint') {
-//             when {
-//                 expression { env.TFLINT == 'true' }
-//             }
-//             steps {
-//                 script {
-//                     // Run TFLint
-//                     dir("${env.DIR}") {
-//                         sh 'tflint --format=json > tflint-results.json'
-//                         def tflintResults = readJSON file: 'tflint-results.json'
-//                         if (tflintResults.errors.size() > 0) {
-//                             error("TFLint reported errors.")
-//                         }
-//                     }
-//                 }
-//             }
-//         }
+        stage('Run TFLint') {
+            when {
+                expression { env.TFLINT == 'true' }
+            }
+            steps {
+                script {
+                    // Run TFLint
+                    dir("${env.DIR}") {
+                        sh 'tflint --format=json > tflint-results.json'
+                        def tflintResults = readJSON file: 'tflint-results.json'
+                        if (tflintResults.errors.size() > 0) {
+                            error("TFLint reported errors.")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run Checkov') {
+            when {
+                expression { env.CHECKOV == 'true' }
+            }
+            steps {
+                script {
+                    // Initialize flag variable
+                    def checkovFailed = false
+
+                    // Run Checkov
+                    dir("${env.DIR}") {
+                        try {
+                            sh 'checkov -d . --quiet --framework terraform --output json > checkov-results.json'
+                            def checkovResults = readJSON file: 'checkov-results.json'
+                            if (checkovResults.results.failed_checks) {
+                                checkovFailed = true
+                            }
+                        } catch (FileNotFoundException e) {
+                            checkovFailed = true
+                            error("Checkov results file not found: ${e.message}")
+                        } catch (Exception e) {
+                            checkovFailed = true
+                            echo "Error running Checkov: ${e.message}"
+                        }
+                    }
+                    // Archive Checkov results
+                    if (checkovFailed) {
+                        archiveArtifacts artifacts: 'terraform/environments/stage/checkov-results.json', onlyIfSuccessful: false
+                        error("Checkov step failed.")
+                    }
+                }
+            }
+        }
+
+        stage('Run TFSec') {
+            when {
+                expression { env.TFSEC == 'true' }
+            }
+            steps {
+                script {
+                    // Run TFSec
+                    dir("${env.DIR}") {
+                        sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
+                        def tfsecResults = readJSON file: 'tfsec-results.json'
+                        if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                            error("Critical alerts found by TFSec.")
+                        }
+                    }
+                }
+                // Archive TFSec results
+                archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
+            }
+        }
+
+        stage('TF Validate') {
+          when {
+            expression { params.action == 'create' }
+          }
+          steps {
+            script {
+              dir("${env.DIR}") {
+              withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+              credentialsId: params.credential,
+              accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+              secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                sh """
+                  terraform init
+                  terraform validate
+                """
+              }
+            }
+          }
+        }
+
+        stage('TF Apply') {
+            steps {
+                dir('terraform/environments/stage') {
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: 'jenkins-automate-user',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]]) {
+                            sh 'terraform plan -out=plan.out'
+                            input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
+                            sh 'terraform apply plan.out'
+                        }
+                    }
+                }
+            }
+        }
 //
-//         stage('Run Checkov') {
-//             when {
-//                 expression { env.CHECKOV == 'true' }
-//             }
-//             steps {
-//                 script {
-//                     // Initialize flag variable
-//                     def checkovFailed = false
 //
-//                     // Run Checkov
-//                     dir("${env.DIR}") {
-//                         try {
-//                             sh 'checkov -d . --quiet --framework terraform --output json > checkov-results.json'
-//                             def checkovResults = readJSON file: 'checkov-results.json'
-//                             if (checkovResults.results.failed_checks) {
-//                                 checkovFailed = true
-//                             }
-//                         } catch (FileNotFoundException e) {
-//                             checkovFailed = true
-//                             error("Checkov results file not found: ${e.message}")
-//                         } catch (Exception e) {
-//                             checkovFailed = true
-//                             echo "Error running Checkov: ${e.message}"
-//                         }
-//                     }
-//                     // Archive Checkov results
-//                     if (checkovFailed) {
-//                         archiveArtifacts artifacts: 'terraform/environments/stage/checkov-results.json', onlyIfSuccessful: false
-//                         error("Checkov step failed.")
-//                     }
-//                 }
-//             }
-//         }
-//
-//         stage('Run TFSec') {
-//             when {
-//                 expression { env.TFSEC == 'true' }
-//             }
-//             steps {
-//                 script {
-//                     // Run TFSec
-//                     dir("${env.DIR}") {
-//                         sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
-//                         def tfsecResults = readJSON file: 'tfsec-results.json'
-//                         if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
-//                             error("Critical alerts found by TFSec.")
-//                         }
-//                     }
-//                 }
-//                 // Archive TFSec results
-//                 archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
-//             }
-//         }
-//
-//         stage('TF Validate and Plan') {
-//           when {
-//             expression { params.action == 'create' }
-//           }
-//           steps {
-//             script {
-//               dir("${env.DIR}") {
-//               withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
-//               credentialsId: params.credential,
-//               accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-//               secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-//                 sh """
-//                   terraform init
-//                   terraform validate
-//                   terraform plan \
-//                     -var cluster-name=${params.cluster} \
-//                     -var num-workers=${params.num_workers} \
-//                     -var max-workers=${params.max_workers} \
-//                     -var cw_logs=${params.cw_logs} \
-//                     -var inst_key_pair=${params.key_pair} \
-//                     -var ca=${params.ca} \
-//                     -var k8s_version=${params.k8s_version} \
-//                     -var aws_region=${params.region} \
-//                     -out ${plan}
-//                 """
-//               }
-//             }
-//           }
-//         }
-//         }
-//
-//         stage('TF Apply') {
-//             steps {
-//                 dir('terraform/environments/stage') {
-//                     script {
-//                         withCredentials([[
-//                             $class: 'AmazonWebServicesCredentialsBinding',
-//                             credentialsId: 'jenkins-automate-user',
-//                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-//                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-//                         ]]) {
-//                             sh 'terraform init'
-//                             sh 'terraform validate'
-//                             sh 'terraform plan -out=plan.out'
-//                             input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
-//                             sh 'terraform apply plan.out'
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//
-//         stage('TF Plan') {
-//               when {
-//                 expression { params.action == 'create' }
-//               }
-//               steps {
-//                 script {
-//                   withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
-//                   credentialsId: params.credential,
-//                   accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-//                   secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-//                     sh """
-//                       terraform init
-//                       terraform workspace new ${params.cluster} || true
-//                       terraform workspace select ${params.cluster}
-//                       terraform plan \
-//                         -var cluster-name=${params.cluster} \
-//                         -var vpc-network=${params.vpc_network} \
-//                         -var vpc-subnets=${params.num_subnets} \
-//                         -var inst-type=${params.instance_type} \
-//                         -var num-workers=${params.num_workers} \
-//                         -var max-workers=${params.max_workers} \
-//                         -var cw_logs=${params.cw_logs} \
-//                         -var inst_key_pair=${params.key_pair} \
-//                         -var ca=${params.ca} \
-//                         -var k8s_version=${params.k8s_version} \
-//                         -var aws_region=${params.region} \
-//                         -out ${plan}
-//                     """
-//                   }
-//                 }
-//               }
-//         }
 //
 //        stage('Cluster setup') {
 //              when {
