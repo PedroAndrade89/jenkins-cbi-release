@@ -42,12 +42,27 @@ pipeline {
             break;
     }
 
-    stages {
-        stage('Output Branch Name') {
-            steps {
-                echo "Currently building branch: ${env.BRANCH_NAME}"
-            }
-        }
+      stages {
+          stage('Output Branch Name') {
+              steps {
+                  echo "Currently building branch: ${env.BRANCH_NAME}"
+              }
+          }
+          // Add other stages as needed
+      }
+      post {
+          always {
+              // Cleanup
+              cleanWs()
+          }
+      }
+  }
+
+
+
+
+
+
         // Other stages as needed
 //         stage('Checkout') {
 //             steps {
@@ -367,11 +382,11 @@ pipeline {
 //                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-ecr-access', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
 //
 //                        sh "aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}"
-       post {
-           always {
-               // Cleanup
-              cleanWs()
-           }
-       }
-       }
-}
+//        post {
+//            always {
+//                // Cleanup
+//               cleanWs()
+//            }
+//        }
+//        }
+// }
