@@ -1,41 +1,49 @@
 pipeline {
-
     options {
-      disableConcurrentBuilds()
-      timeout(time: 40, unit: 'MINUTES') // Timeout
+        disableConcurrentBuilds()
+        timeout(time: 40, unit: 'MINUTES') // Timeout
     }
-
     agent {
         label 'jenkins-slave'
     }
-
     environment {
         PATH = "/home/jenkins-slave/.local/bin/:${env.PATH}" // Add Ansible bin directory to PATH
+        // SECRET_NAME will be defined here, but DIR will be set within a stage because it requires script logic
         SECRET_NAME = "${env.cluster_name}-jenkins-sa-kubeconf" // Define the name of your secret in AWS Secrets Manager
-        switch (${env.BRANCH_NAME}) {
-          case 'qa':
-            DIR='terraform/environments/qa'
-            break;
-          case 'prod':
-            DIR='terraform/environments/prod'
-            break;
-          case 'stage':
-            DIR='terraform/environments/stage'
-            break;
-        }
     }
-
     stages {
+        stage('Initialize Environment Variables') {
+            steps {
+                script {
+                    // Using Groovy's switch statement to set the DIR environment variable based on the branch name
+                    env.DIR = "" // Initialize DIR
+                    switch (env.BRANCH_NAME) {
+                        case 'qa':
+                            env.DIR = 'terraform/environments/qa'
+                            break
+                        case 'prod':
+                            env.DIR = 'terraform/environments/prod'
+                            break
+                        case 'stage':
+                            env.DIR = 'terraform/environments/stage'
+                            break
+                        default:
+                            error "Unknown branch name: ${env.BRANCH_NAME}"
+                    }
+                }
+            }
+        }
         stage('Output Branch Name') {
             steps {
                 echo "Currently building branch: ${env.BRANCH_NAME}"
+                echo "Environment DIR is set to: ${env.DIR}"
             }
         }
-          // Add other stages as needed
+        // Add other stages as needed
     }
     post {
-      always {
-        cleanWs()
-      }
+        always {
+            cleanWs()
+        }
     }
 }
