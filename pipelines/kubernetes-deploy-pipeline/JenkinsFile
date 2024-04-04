@@ -153,11 +153,9 @@ pipeline {
                         ]) {
                             sh """
                             terraform plan \
-                               -var cluster-name=${params.cluster} \
-                               -var inst-type=${params.instance_type} \
                                -var ca=${params.ca} \
                                -var k8s_version=${params.k8s_version} \
-                               -var aws_region=${params.region} \
+                               -var region=${params.region} \
                                -out=plan.out
                             """
                             input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
