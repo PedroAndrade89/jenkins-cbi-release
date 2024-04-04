@@ -1,7 +1,7 @@
 pipeline {
     parameters {
         choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
-        string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
+        string(name: 'region', defaultValue : 'us-east-1', description: "AWS region.")
         choice(name: 'eks_version', choices: '1.30\n1.29\n1.28', description: 'K8s version to install.')
         booleanParam(name: 'TFLINT', defaultValue: true, description: "Run TFLint?")
         booleanParam(name: 'CHECKOV', defaultValue: true, description: "Run Checkov?")
