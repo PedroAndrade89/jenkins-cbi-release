@@ -245,13 +245,13 @@ pipeline {
                               // CA image tag, which is k8s major version plus CA minor version.
                               // See for latest versions: https://github.com/kubernetes/autoscaler/releases
                               switch (params.eks_version) {
-                                case '1.30':
-                                  tag='0'
-                                  break;
                                 case '1.29':
                                   tag='0'
                                   break;
                                 case '1.28':
+                                  tag='0'
+                                  break;
+                                case '1.27':
                                   tag='1'
                                   break;
                               }
