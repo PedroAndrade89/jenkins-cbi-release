@@ -2,7 +2,7 @@ pipeline {
     parameters {
         choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
         string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
-        choice(name: 'k8s_version', choices: '1.30\n1.29\n1.28', description: 'K8s version to install.')
+        choice(name: 'eks_version', choices: '1.30\n1.29\n1.28', description: 'K8s version to install.')
         booleanParam(name: 'TFLINT', defaultValue: true, description: "Run TFLint?")
         booleanParam(name: 'CHECKOV', defaultValue: true, description: "Run Checkov?")
         booleanParam(name: 'TFSEC', defaultValue: true, description: "Run TFSec?")
@@ -154,7 +154,7 @@ pipeline {
                             sh """
                             terraform plan \
                                -var ca=${params.ca} \
-                               -var k8s_version=${params.k8s_version} \
+                               -var eks_version=${params.eks_version} \
                                -var region=${params.region} \
                                -out=plan.out
                             """
@@ -245,7 +245,7 @@ pipeline {
 
                               // CA image tag, which is k8s major version plus CA minor version.
                               // See for latest versions: https://github.com/kubernetes/autoscaler/releases
-                              switch (params.k8s_version) {
+                              switch (params.eks_version) {
                                 case '1.30':
                                   tag='0'
                                   break;
