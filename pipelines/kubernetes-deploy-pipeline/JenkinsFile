@@ -1,11 +1,19 @@
 pipeline {
     parameters {
-        string(name: 'GREETING', defaultValue: 'Hello', description: 'How do you want to greet?')
-        choice(name: 'BRANCH', choices: ['main', 'dev', 'feature'], description: 'Which branch to build?')
+        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
+        string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
         booleanParam(name: 'TFLINT', defaultValue: true, description: "Run TFLint?")
         booleanParam(name: 'CHECKOV', defaultValue: true, description: "Run Checkov?")
         booleanParam(name: 'TFSEC', defaultValue: true, description: "Run TFSec?")
-        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
+        booleanParam(name: 'cw_logs', defaultValue : true, description: "Setup Cloudwatch logging?")
+        booleanParam(name: 'cw_metrics', defaultValue : false, description: "Setup Cloudwatch metrics and Container Insights?")
+        booleanParam(name: 'metrics_server', defaultValue : true, description: "Setup k8s metrics-server?")
+        booleanParam(name: 'dashboard', defaultValue : false, description: "Setup k8s dashboard?")
+        booleanParam(name: 'prometheus', defaultValue : true, description: "Setup k8s prometheus?")
+        booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
+        booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
+        booleanParam(name: 'cert_manager', defaultValue : false, description: "Setup cert-manager for certificate handling?")
+
     }
 
     options {
@@ -18,11 +26,6 @@ pipeline {
     }
 
     stages {
-        stage('Example') {
-            steps {
-                echo "${params.GREETING}, the chosen branch is ${params.BRANCH}"
-            }
-        }
 
         stage('Initialize Environment Variables') {
             steps {
@@ -165,7 +168,7 @@ pipeline {
                     withCredentials([
                         [
                             $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: params.credential,
+                            credentialsId: 'jenkins-automate-user',
                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         ]
