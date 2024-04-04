@@ -153,7 +153,6 @@ pipeline {
                         ]) {
                             sh """
                             terraform plan \
-                               -var ca=${params.ca} \
                                -var eks_version=${params.eks_version} \
                                -var region=${params.region} \
                                -out=plan.out
