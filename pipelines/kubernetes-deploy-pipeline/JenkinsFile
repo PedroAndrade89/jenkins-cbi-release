@@ -160,8 +160,14 @@ pipeline {
                                -var region=${params.region} \
                                -out=plan.out
                             """
-                            input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
-                            sh 'terraform apply plan.out'
+                            if (env.BRANCH_NAME == main) {
+                                input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
+                                sh 'terraform apply plan.out'
+                            }
+                            else {
+                                sh 'terraform apply -input=false -auto-approve plan.out '
+                            }
+
                             // Get Terraform outputs
                             outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
                             echo "Terraform Outputs: ${outputJson}"
