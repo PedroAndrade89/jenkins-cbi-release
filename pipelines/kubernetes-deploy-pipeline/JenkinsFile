@@ -53,6 +53,11 @@ pipeline {
                     }
                 }
             }
+            steps{
+                script{
+                    sh 'source ~/ansible_env/bin/activate'
+                }
+            }
         }
 
         stage('Run TFLint') {
