@@ -160,7 +160,7 @@ pipeline {
                                -var region=${params.region} \
                                -out=plan.out
                             """
-                            if (env.BRANCH_NAME == main) {
+                            if (env.BRANCH_NAME == "main") {
                                 input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
                                 sh 'terraform apply plan.out'
                             }
