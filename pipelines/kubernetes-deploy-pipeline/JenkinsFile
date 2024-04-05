@@ -159,6 +159,11 @@ pipeline {
                             """
                             input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
                             sh 'terraform apply plan.out'
+                            // Get Terraform outputs
+                            outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
+                            echo "Terraform Outputs: ${outputJson}"
+                            def outputs = readJSON text: outputJson
+                            clustername = outputs.cluster_name.value
                         }
                     }
                 }
@@ -179,7 +184,7 @@ pipeline {
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         ]
                     ]) {
-                        sh "aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}"
+                        sh "aws eks update-kubeconfig --name ${env.clustername} --region ${params.region}"
 
                         // CW Metrics and Container Insights setup
                         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-prerequisites.html
