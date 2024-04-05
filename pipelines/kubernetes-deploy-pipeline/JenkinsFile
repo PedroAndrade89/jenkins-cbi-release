@@ -294,7 +294,7 @@ pipeline {
                                 sleep 5
                                 ${env.KUBECTL_PATH}/kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
                                   jq | \\
-                                  sed 's/<YOUR CLUSTER NAME>/${params.cluster}/g' | \\
+                                  sed 's/<YOUR CLUSTER NAME>/${clusterName}/g' | \\
                                   jq '.spec.template.spec.containers[0].command += ["--balance-similar-node-groups","--skip-nodes-with-system-pods=false"]' | \\
                                   ${env.KUBECTL_PATH}/kubectl apply -f -
                                 ${env.KUBECTL_PATH}/kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
