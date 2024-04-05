@@ -211,10 +211,6 @@ pipeline {
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         ]
                     ]) {
-                        sh 'pip3 list'
-                        sh 'python --version'
-                        sh 'ls -lh ~/ansible_env/bin/'
-                        sh 'aws --version'
                         sh "aws eks update-kubeconfig --name ${clusterName} --region ${params.region}"
 
                         // CW Metrics and Container Insights setup
@@ -356,7 +352,17 @@ pipeline {
                             ]
                         ]) {
                             sh """
-                              aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
+                              terraform init
+                              terraform plan -var eks_version=${params.eks_version} -var region=${params.region} -out=plan.out
+                            """
+                            // Get Terraform outputs
+                            outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
+                            echo "Terraform Outputs: ${outputJson}"
+                            def outputs = readJSON text: outputJson
+                            clusterName = outputs.cluster_name.value
+                            sh """
+
+                              aws eks update-kubeconfig --name ${clusterName} --region ${params.region}
 
                               # Some of these helm charts may not be installed; just try and remove them anyway
                               helm uninstall prometheus --namespace prometheus || true
@@ -365,8 +371,6 @@ pipeline {
                               helm uninstall nginx-ingress --namespace nginx-ingress || true
                               sleep 20
 
-                              terraform init
-                              terraform plan -var eks_version=${params.eks_version} -var region=${params.region} -out=plan.out
                               terraform destroy -auto-approve
                             """
                         }
