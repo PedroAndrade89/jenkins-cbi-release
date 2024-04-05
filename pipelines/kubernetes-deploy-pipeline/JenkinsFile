@@ -34,6 +34,15 @@ pipeline {
 
     stages {
 
+
+        stage('Initialize virtual Environment') {
+            steps{
+                script{
+                    sh 'source ~/ansible_env/bin/activate'
+                }
+            }
+        }
+
         stage('Initialize Environment Variables') {
             steps {
                 script {
@@ -51,11 +60,6 @@ pipeline {
                         default:
                             error "Unknown branch name: ${env.BRANCH_NAME}"
                     }
-                }
-            }
-            steps{
-                script{
-                    sh 'source ~/ansible_env/bin/activate'
                 }
             }
         }
