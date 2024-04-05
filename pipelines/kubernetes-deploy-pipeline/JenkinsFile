@@ -344,30 +344,32 @@ pipeline {
                 expression { params.action == 'destroy' }
             }
             steps {
-                script {
-                    input "Destroy Terraform stack ${params.cluster} in AWS?"
-                    withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: 'jenkins-automate-user',
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
-                    ]) {
-                        sh """
-                          aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
+                dir(env.DIR) {
+                    script {
+                        input "Destroy Terraform stack ${params.cluster} in AWS?"
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'jenkins-automate-user',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            sh """
+                              aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
 
-                          # Some of these helm charts may not be installed; just try and remove them anyway
-                          helm uninstall prometheus --namespace prometheus || true
-                          helm uninstall cert-manager --namespace cert-manager || true
-                          ${env.KUBECTL_PATH}/kubectl delete -f nginx-ingress-proxy.yaml || true
-                          helm uninstall nginx-ingress --namespace nginx-ingress || true
-                          sleep 20
+                              # Some of these helm charts may not be installed; just try and remove them anyway
+                              helm uninstall prometheus --namespace prometheus || true
+                              helm uninstall cert-manager --namespace cert-manager || true
+                              ${env.KUBECTL_PATH}/kubectl delete -f nginx-ingress-proxy.yaml || true
+                              helm uninstall nginx-ingress --namespace nginx-ingress || true
+                              sleep 20
 
-                          terraform init
-                          terraform plan -var eks_version=${params.eks_version} -var region=${params.region} -out=plan.out
-                          terraform destroy -auto-approve
-                        """
+                              terraform init
+                              terraform plan -var eks_version=${params.eks_version} -var region=${params.region} -out=plan.out
+                              terraform destroy -auto-approve
+                            """
+                        }
                     }
                 }
             }
