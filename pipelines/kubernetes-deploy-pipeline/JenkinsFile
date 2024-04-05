@@ -200,6 +200,8 @@ pipeline {
                         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html
                         if (params.cw_metrics == true) {
                           echo "Setting up Cloudwatch metrics and Container Insights."
+                          sh 'id & hostname -I'
+                          sh 'which kubectl'
                           sh """
                               curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
                               sed "s/{{cluster_name}}/${clusterName}/;s/{{region_name}}/ ${params.region}/" > cwagent-fluentd-quickstart-modified.yaml
