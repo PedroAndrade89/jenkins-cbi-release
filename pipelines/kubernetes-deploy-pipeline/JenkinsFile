@@ -200,11 +200,9 @@ pipeline {
                         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html
                         if (params.cw_metrics == true) {
                           echo "Setting up Cloudwatch metrics and Container Insights."
-                          sh """
-                            curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
-                              sed "s/{{cluster_name}}/${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
-                              kubectl apply -f -
-                          """
+                          sh 'curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml'
+                          sh 'sed "s/{{cluster_name}}/${clusterName}/;s/{{region_name}}/${params.region}/" cwagent-fluentd-quickstart.yaml'
+                          sh ' kubectl apply -f cwagent-fluentd-quickstart.yaml'
                         }
 
                         // https://docs.aws.amazon.com/eks/latest/userguide/metrics-server.html
