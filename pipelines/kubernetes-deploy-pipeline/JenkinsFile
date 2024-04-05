@@ -291,16 +291,26 @@ pipeline {
                               // Setup documented here: https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html
                               // Tested ca late 2021 on k8s 1.21.
                               sh """
-                                ${env.KUBECTL_PATH}/kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
-                                ${env.KUBECTL_PATH}/kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
-                                sleep 5
-                                ${env.KUBECTL_PATH}/kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
-                                  jq | \\
+                                  # Apply the Cluster Autoscaler YAML, replacing <YOUR CLUSTER NAME> with the actual name
+                                  curl https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml | \\
                                   sed 's/<YOUR CLUSTER NAME>/${clusterName}/g' | \\
+                                  ${env.KUBECTL_PATH}/kubectl apply -f -
+
+                                  # Annotate the deployment
+                                  ${env.KUBECTL_PATH}/kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
+
+                                  # Sleep for 5 seconds to ensure the deployment is applied
+                                  sleep 5
+
+                                  # Fetch, modify, and apply the deployment in one pipeline
+                                  ${env.KUBECTL_PATH}/kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
                                   jq '.spec.template.spec.containers[0].command += ["--balance-similar-node-groups","--skip-nodes-with-system-pods=false"]' | \\
                                   ${env.KUBECTL_PATH}/kubectl apply -f -
-                                ${env.KUBECTL_PATH}/kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
+
+                                  # Set the image
+                                  ${env.KUBECTL_PATH}/kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
                               """
+
                         }
 
                         // See: https://aws.amazon.com/premiumsupport/knowledge-center/eks-access-kubernetes-services/
