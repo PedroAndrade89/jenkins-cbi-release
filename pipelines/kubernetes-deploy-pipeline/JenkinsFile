@@ -67,6 +67,7 @@ pipeline {
         stage('Run TFLint') {
             when {
                 expression { env.TFLINT == 'true' }
+                expression { params.action == 'create' }
             }
             steps {
                 script {
@@ -84,6 +85,7 @@ pipeline {
         stage('Run Checkov') {
             when {
                 expression { env.CHECKOV == 'true' }
+                expression { params.action == 'create' }
             }
             steps {
                 script {
@@ -114,6 +116,7 @@ pipeline {
         stage('Run TFSec') {
             when {
                 expression { env.TFSEC == 'true' }
+                expression { params.action == 'create' }
             }
             steps {
                 script {
@@ -155,6 +158,9 @@ pipeline {
         }
 
         stage('TF Apply') {
+            when {
+                expression { params.action == 'create' }
+            }
             steps {
                 dir(env.DIR) {
                     script {
