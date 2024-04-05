@@ -343,7 +343,6 @@ pipeline {
                           helm uninstall nginx-ingress --namespace nginx-ingress || true
                           sleep 20
 
-                          terraform workspace select ${params.cluster}
                           terraform destroy -auto-approve
                         """
                     }
