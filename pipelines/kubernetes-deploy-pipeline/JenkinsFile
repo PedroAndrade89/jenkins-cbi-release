@@ -25,7 +25,7 @@ pipeline {
     }
 
     environment{
-        KUBECTL_PATH = "/home/jenkins-slave/bin"
+        KUBECTL_PATH = "/usr/local/sbin"
     }
 
     agent {
