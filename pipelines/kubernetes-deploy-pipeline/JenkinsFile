@@ -365,6 +365,7 @@ pipeline {
                           sleep 20
 
                           terraform init
+                          terraform plan -var eks_version=${params.eks_version} -var region=${params.region} -out=plan.out
                           terraform destroy -auto-approve
                         """
                     }
