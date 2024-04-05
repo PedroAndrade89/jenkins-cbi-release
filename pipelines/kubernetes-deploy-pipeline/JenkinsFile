@@ -217,43 +217,39 @@ pipeline {
                           sh "${env.KUBECTL_PATH}/kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
                         }
 
-                        // https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html
-                        if (params.dashboard == true) {
-                            echo "Setting up k8s dashboard."
-                            echo "Setting up k8s dashboard."
-                            sh """
-                                ${env.KUBECTL_PATH}/kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.5/aio/deploy/recommended.yaml
-                                cat <<EOF | ${env.KUBECTL_PATH}/kubectl apply -f -
-                                apiVersion: v1
-                                kind: ServiceAccount
-                                metadata:
-                                  name: eks-admin
-                                  namespace: kube-system
+                       if (params.dashboard == true) {
+                           echo "Setting up k8s dashboard."
+                           sh """
+                               ${env.KUBECTL_PATH}/kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.5/aio/deploy/recommended.yaml
+                               cat <<EOF | ${env.KUBECTL_PATH}/kubectl apply -f -
+                               apiVersion: v1
+                               kind: ServiceAccount
+                               metadata:
+                                 name: eks-admin
+                                 namespace: kube-system
 
-                                ---
+                               ---
 
-                                apiVersion: rbac.authorization.k8s.io/v1
-                                kind: ClusterRoleBinding
-                                metadata:
-                                  name: eks-admin
-                                roleRef:
-                                  apiGroup: rbac.authorization.k8s.io
-                                  kind: ClusterRole
-                                  name: cluster-admin
-                                subjects:
-                                - kind: ServiceAccount
-                                  name: eks-admin
-                                  namespace: kube-system
-                                EOF
-                            """
-
-                              echo "You need to get the secret token and then use kubectl proxy to get to the dashboard:"
-                              echo "${env.KUBECTL_PATH}/kubectl -n kube-system describe secret \$(kubectl -n kube-system get secret | grep eks-admin | awk '{print \$1}')"
-                              echo "${env.KUBECTL_PATH}/kubectl proxy"
-                              echo "Then visit: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login"
-                              echo "See docs at https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html"
-
-                        }
+                               apiVersion: rbac.authorization.k8s.io/v1
+                               kind: ClusterRoleBinding
+                               metadata:
+                                 name: eks-admin
+                               roleRef:
+                                 apiGroup: rbac.authorization.k8s.io
+                                 kind: ClusterRole
+                                 name: cluster-admin
+                               subjects:
+                               - kind: ServiceAccount
+                                 name: eks-admin
+                                 namespace: kube-system
+                       EOF
+                           """
+                           echo "You need to get the secret token and then use kubectl proxy to get to the dashboard:"
+                           echo "${env.KUBECTL_PATH}/kubectl -n kube-system describe secret \$(kubectl -n kube-system get secret | grep eks-admin | awk '{print \$1}')"
+                           echo "${env.KUBECTL_PATH}/kubectl proxy"
+                           echo "Then visit: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login"
+                           echo "See docs at https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html"
+                       }
 
                         // https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html
                         if (params.prometheus == true) {
