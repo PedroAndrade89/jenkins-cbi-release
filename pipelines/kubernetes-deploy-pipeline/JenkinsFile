@@ -207,7 +207,7 @@ pipeline {
                               curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
                               sed "s/{{cluster_name}}/${clusterName}/;s/{{region_name}}/ ${params.region}/" > cwagent-fluentd-quickstart-modified.yaml
                           """
-                          sh ' ${env.KUBECTL_PATH}/kubectl apply -f cwagent-fluentd-quickstart-modified.yaml'
+                          sh "${env.KUBECTL_PATH}/kubectl apply -f cwagent-fluentd-quickstart-modified.yaml"
                         }
 
                         // https://docs.aws.amazon.com/eks/latest/userguide/metrics-server.html
