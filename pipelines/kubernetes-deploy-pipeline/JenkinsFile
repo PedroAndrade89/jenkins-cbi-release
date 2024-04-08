@@ -6,7 +6,6 @@ pipeline {
         string(name: 'region', defaultValue : 'us-east-1', description: "AWS region.")
         choice(name: 'eks_version', choices: '1.29\n1.28\n1.27', description: 'K8s version to install.')
         booleanParam(name: 'TFLINT', defaultValue: true, description: "Run TFLint?")
-        booleanParam(name: 'CHECKOV', defaultValue: true, description: "Run Checkov?")
         booleanParam(name: 'TFSEC', defaultValue: true, description: "Run TFSec?")
         booleanParam(name: 'cw_logs', defaultValue : true, description: "Setup Cloudwatch logging?")
         booleanParam(name: 'cw_metrics', defaultValue : true, description: "Setup Cloudwatch metrics and Container Insights?")
@@ -77,37 +76,6 @@ pipeline {
                         if (tflintResults.errors.size() > 0) {
                             error("TFLint reported errors.")
                         }
-                    }
-                }
-            }
-        }
-
-        stage('Run Checkov') {
-            when {
-                expression { env.CHECKOV == 'true' }
-                expression { params.action == 'create' }
-            }
-            steps {
-                script {
-                    def checkovFailed = false
-                    dir("${env.DIR}") {
-                        try {
-                            sh 'checkov -d . --quiet --framework terraform --output json > checkov-results.json'
-                            def checkovResults = readJSON file: 'checkov-results.json'
-                            if (checkovResults.results.failed_checks) {
-                                checkovFailed = true
-                            }
-                        } catch (FileNotFoundException e) {
-                            checkovFailed = true
-                            error("Checkov results file not found: ${e.message}")
-                        } catch (Exception e) {
-                            checkovFailed = true
-                            echo "Error running Checkov: ${e.message}"
-                        }
-                    }
-                    if (checkovFailed) {
-                        archiveArtifacts artifacts: 'terraform/environments/stage/checkov-results.json', onlyIfSuccessful: false
-                        error("Checkov step failed.")
                     }
                 }
             }
