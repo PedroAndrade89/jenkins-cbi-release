@@ -274,8 +274,8 @@ pipeline {
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
                                 helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace \\
-                                --set controller.service.annotations."service.beta.kubernetes.io/aws-load-balancer-healthcheck-path"="/healthz" \\
-                                --set controller.service.annotations."service.beta.kubernetes.io/aws-load-balancer-healthcheck-port"="31155" \\
+                                  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-path"="/healthz" \\
+                                  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-port"="10254" \\
                                 --set controller.readinessProbe.httpGet.path=/healthz \\
                                 --set controller.readinessProbe.httpGet.port=31155 \\
                                 --set controller.livenessProbe.httpGet.path=/healthz \\
