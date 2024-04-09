@@ -273,7 +273,13 @@ pipeline {
                             sh """
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
-                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
+                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace \\
+                                --set controller.service.httpPort=80 \\
+                                --set controller.service.httpsPort=443 \\
+                                --set controller.readinessProbe.httpGet.path=/healthz \\
+                                --set controller.readinessProbe.httpGet.port=31155 \\
+                                --set controller.livenessProbe.httpGet.path=/healthz \\
+                                --set controller.livenessProbe.httpGet.port=31451
                                 echo "Dns name of nginx ingress load balancer is below:"
                                 ${env.KUBECTL_PATH}/kubectl get svc --namespace=nginx-ingress
                               """
