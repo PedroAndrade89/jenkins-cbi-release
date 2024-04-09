@@ -290,7 +290,7 @@ pipeline {
                                 helm install prometheus prometheus-community/prometheus \
                                   --namespace prometheus \
                                   --create-namespace \
-                                  --set alertmanager.persistentVolume.storageClass="gp3",server.persistentVolume.storageClass="gp3"
+                                  --set alertmanager.persistentVolume.storageClass="gp3",server.persistentVolume.storageClass="gp3" \\
                                   --set server.ingress.enabled=true \\
                                   --set server.ingress.paths[0]="/" \\
                                   --set server.ingress.annotations.'kubernetes\\.io/ingress\\.class'=nginx
