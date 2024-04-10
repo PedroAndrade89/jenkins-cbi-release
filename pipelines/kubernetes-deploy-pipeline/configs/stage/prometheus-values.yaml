@@ -3,8 +3,17 @@ alertmanager:
     storageClass: "gp3"
 
 server:
-  persistentVolume:
-    storageClass: "gp3"
+  server:
+    persistentVolume:
+      enabled: true
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 3Gi
 
   configMaps:
     prometheus-yml: prometheus-cm
