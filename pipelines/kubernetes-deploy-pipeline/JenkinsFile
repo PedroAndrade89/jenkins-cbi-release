@@ -295,8 +295,6 @@ pipeline {
                         // https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html
                         if (params.prometheus == true) {
                             echo "Setting up k8s prometheus."
-                            sh 'pip3 list'
-                            sh 'aws --version'
                             sh """
                                 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
                                 helm repo update
