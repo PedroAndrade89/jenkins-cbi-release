@@ -282,10 +282,10 @@ pipeline {
                         if (params.nginx_ingress == true) {
                             echo "Setting up nginx ingress and load balancer."
                             sh """
-                                ls -lh
-                                pwd
+                                ${env.KUBECTL_PATH}/kubectl create ns nginx-ingress
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
+                                ${env.KUBECTL_PATH}/kubectl apply -f nginx-ingress-cm.yaml
                                 helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace -f nginx-ingress-values.yaml
                                 ${env.KUBECTL_PATH}/kubectl apply -f nginx-ingress-proxy.yaml
                                 echo "Dns name of nginx ingress load balancer is below:"
