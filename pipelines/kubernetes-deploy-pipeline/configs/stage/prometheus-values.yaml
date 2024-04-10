@@ -1,12 +1,12 @@
 alertmanager:
   persistentVolume:
     enabled: true
-    storageClass: "encrypted-gp3"
+    storageClass: "gp3-encrypted"
 
 server:
   persistentVolume:
     enabled: true
-    storageClass: "encrypted-gp3"
+    storageClass: "gp3-encrypted"
 
   configMaps:
     prometheus-yml: prometheus-cm
