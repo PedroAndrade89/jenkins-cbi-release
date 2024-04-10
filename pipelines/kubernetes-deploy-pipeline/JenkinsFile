@@ -15,6 +15,7 @@ pipeline {
         booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
         booleanParam(name: 'ca', defaultValue : true, description: "Setup k8s Cluster Autoscaler?")
         booleanParam(name: 'cert_manager', defaultValue : true, description: "Setup cert-manager for certificate handling?")
+        booleanParam(name: 'fluent_bit', defaultValue : true, description: "Setup fluent_bit and send logs to graylog")
 
     }
 
@@ -319,6 +320,23 @@ pipeline {
 //                                 ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-le-prod.yaml
                               """
                         }
+
+                        // Updated cert-manager version installed late 2021
+                        if (params.fluent_bit == true) {
+                            echo "Setting up fluent-bit to send logs to graylog"
+                            sh """
+                                ${env.KUBECTL_PATH}/kubectl apply -f fluent-bit-cm.yaml
+                                helm repo add fluent https://fluent.github.io/helm-charts
+                                helm repo update
+                                helm install fluent-bit fluent/fluent-bit --namespace logging \
+                                  --set config.service="fluent-bit.conf" \
+                                  --set config.customParsers="parsers.conf" \
+                                  --set configMaps.service="fluent-bit-cm" \
+                                  --set configMaps.customParsers="fluent-bit-cm"
+                                helm install fluent-bit fluent/fluent-bit --namespace logging -f values.yaml
+                              """
+                        }
+
                     }
                   }
                 }
