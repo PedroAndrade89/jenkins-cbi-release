@@ -3,9 +3,8 @@ alertmanager:
     storageClass: "gp3"
 
 server:
-  server:
-    persistentVolume:
-      enabled: true
+  persistentVolume:
+    enabled: true
   prometheusSpec:
     storageSpec:
       volumeClaimTemplate:
