@@ -199,7 +199,7 @@ pipeline {
                         ],
                         [
                             $class: 'SSHUserPrivateKeyBinding', // SSH private key binding
-                            credentialsId: 'letsencrypt-stage',
+                            credentialsId: 'letsencrypt-stage-key',
                             keyFileVariable: 'SSH_KEY'
                         ]
                     ]) {
