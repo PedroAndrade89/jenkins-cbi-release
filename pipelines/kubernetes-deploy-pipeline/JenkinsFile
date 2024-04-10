@@ -169,7 +169,9 @@ pipeline {
         stage('Checkout Configs') {
             steps {
                 git branch: "main", credentialsId: 'github-pedro', url: "git@github.com:PedroAndrade89/jenkins-pipelines.git"
-                env.DIR = "pipelines/kubernetes-deploy-pipeline/configs/"
+                script {
+                    env.DIR = "pipelines/kubernetes-deploy-pipeline/configs/"
+                }
             }
         }
 
