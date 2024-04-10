@@ -48,7 +48,7 @@ pipeline {
                 script {
                     sh 'pwd'
                     sh 'ls -lh'
-                    sh 'ls -lh /var/lib/jenkins/workspace/infra-k8s_stage@script/'
+                    sh 'ls -lh ./pipelines/kubernetes-deploy-pipeline/'
                     env.DIR = ""
                     switch (env.BRANCH_NAME) {
                         case 'qa':
