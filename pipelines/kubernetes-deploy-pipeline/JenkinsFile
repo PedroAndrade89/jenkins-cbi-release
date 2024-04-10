@@ -167,15 +167,22 @@ pipeline {
         }
 
         stage('Cluster setup') {
+                    when {
+                        expression { params.action == 'create' }
+                    }
+        }
+
+        stage('Cluster setup') {
             when {
                 expression { params.action == 'create' }
             }
+
             steps {
                 script {
-                    def grafanaURL = 'http://<Grafana_Service_IP>:3000' // Replace with your Grafana URL
-                    def grafanaUser = 'admin' // Default Grafana admin user
-                    def grafanaPassword = 'YourAdminPassword' // Replace with your Grafana admin password
-                    def prometheusURL = 'http://prometheus-server.prometheus.svc.cluster.local' // Prometheus service URL within the cluster
+//                     def grafanaURL = 'http://<Grafana_Service_IP>:3000' // Replace with your Grafana URL
+//                     def grafanaUser = 'admin' // Default Grafana admin user
+//                     def grafanaPassword = 'YourAdminPassword' // Replace with your Grafana admin password
+//                     def prometheusURL = 'http://prometheus-server.prometheus.svc.cluster.local' // Prometheus service URL within the cluster
                     withCredentials([
                         [
                             $class: 'AmazonWebServicesCredentialsBinding',
@@ -273,17 +280,12 @@ pipeline {
                             sh """
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
-                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace \\
-                                  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-path"="/healthz" \\
-                                  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-healthcheck-port"="10254" \\
-                                --set controller.readinessProbe.httpGet.path=/healthz \\
-                                --set controller.readinessProbe.httpGet.port=31155 \\
-                                --set controller.livenessProbe.httpGet.path=/healthz \\
-                                --set controller.livenessProbe.httpGet.port=31155
+                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace -f configs/nginx-values.yaml
                                 echo "Dns name of nginx ingress load balancer is below:"
                                 ${env.KUBECTL_PATH}/kubectl get svc --namespace=nginx-ingress
-                              """
+                            """
                         }
+
 
                         // https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html
                         if (params.prometheus == true) {
