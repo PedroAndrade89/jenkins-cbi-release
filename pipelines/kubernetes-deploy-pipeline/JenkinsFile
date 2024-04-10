@@ -46,9 +46,6 @@ pipeline {
         stage('Initialize Environment Variables') {
             steps {
                 script {
-                    sh 'pwd'
-                    sh 'ls -lh'
-                    sh 'ls -lh ./pipelines/kubernetes-deploy-pipeline/'
                     env.DIR = ""
                     switch (env.BRANCH_NAME) {
                         case 'qa':
@@ -166,6 +163,12 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+
+        stage('Checkout Configs') {
+            steps {
+                git branch: "main", credentialsId: 'github-pedro', url: "git@github.com:PedroAndrade89/jenkins-pipelines.git"
             }
         }
 
