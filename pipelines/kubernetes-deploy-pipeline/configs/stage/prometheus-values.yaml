@@ -11,7 +11,7 @@ server:
   ingress:
     enabled: true
     hosts:
-      - a91cf1f3edd764b908520ce06b3fc9a1-1987775365.us-east-1.elb.amazonaws.com
+      - aaef870036aac49368ad5580990dd1f3-1955026494.us-east-1.elb.amazonaws.com
     paths:
       - "/"
     annotations:
