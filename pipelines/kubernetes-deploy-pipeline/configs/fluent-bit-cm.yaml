@@ -60,7 +60,7 @@ data:
         Name                    gelf
         Match                   log.systemd
         Host                    54.86.95.48
-        Port                    9000
+        Port                    12201
         Mode                    tcp
         Gelf_Short_Message_Key  MESSAGE
         Retry_Limit 100
@@ -69,7 +69,7 @@ data:
         Name                    gelf
         Match                   kube.*
         Host                    54.86.95.48
-        Port                    9000
+        Port                    12202
         Mode                    tcp
         Gelf_Short_Message_Key  message
         Retry_Limit 100
