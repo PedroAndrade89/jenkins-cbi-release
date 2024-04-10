@@ -315,18 +315,27 @@ pipeline {
                               echo "Alternativly use k8s Lens which is much easier (choose Helm for the Prometheus setup its not auto detected)."
                         }
 
-                        // Updated cert-manager version installed late 2021
                         if (params.cert_manager == true) {
                             echo "Setting up cert-manager."
                             sh """
+
                                 helm repo add jetstack https://charts.jetstack.io || true
                                 helm repo update
                                 helm upgrade --install --atomic jetstack/cert-manager --namespace cert-manager --version v1.5.3 --set installCRDs=true --create-namespace
                                 sleep 30 # allow cert-manager setup in the cluster
-//                                 ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-le-staging.yaml
-//                                 ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-le-prod.yaml
-                              """
+
+                                // Retrieve SSH private key from Jenkins credentials
+                                sshPrivateKey = credentials('letsencrypt-stage')
+
+                                // Create Kubernetes Secret with the SSH private key
+                                echo "Creating Kubernetes Secret for SSH private key."
+                                ${env.KUBECTL_PATH}/kubectl create secret generic letsencrypt-staging --from-literal=ssh-privatekey=\$sshPrivateKey --namespace cert-manager
+
+                                // Apply ClusterIssuer configurations
+                                // ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-stage.yaml
+                            """
                         }
+
 
                         // Updated cert-manager version installed late 2021
                         if (params.fluent_bit == true) {
