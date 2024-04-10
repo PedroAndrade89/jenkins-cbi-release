@@ -1,18 +1,12 @@
 alertmanager:
   persistentVolume:
-    storageClass: "gp3"
+    enabled: true
+    storageClass: "encrypted-gp3"
 
 server:
   persistentVolume:
     enabled: true
-  prometheusSpec:
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 3Gi
+    storageClass: "encrypted-gp3"
 
   configMaps:
     prometheus-yml: prometheus-cm
