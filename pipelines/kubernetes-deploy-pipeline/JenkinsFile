@@ -180,7 +180,7 @@ pipeline {
 
             steps {
                 script {
-                    dir("${env.DIR}")
+                  dir("${env.DIR}"){
 //                     def grafanaURL = 'http://<Grafana_Service_IP>:3000' // Replace with your Grafana URL
 //                     def grafanaUser = 'admin' // Default Grafana admin user
 //                     def grafanaPassword = 'YourAdminPassword' // Replace with your Grafana admin password
@@ -327,6 +327,7 @@ pipeline {
                               """
                         }
                     }
+                  }
                 }
             }
         }
