@@ -167,12 +167,6 @@ pipeline {
         }
 
         stage('Cluster setup') {
-                    when {
-                        expression { params.action == 'create' }
-                    }
-        }
-
-        stage('Cluster setup') {
             when {
                 expression { params.action == 'create' }
             }
