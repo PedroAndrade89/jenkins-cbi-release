@@ -4,7 +4,7 @@ metadata:
   name: fluent-bit-cm
   namespace: logging  # Change this to the namespace where you want to deploy Fluent Bit
 data:
-  parsers.conf: |
+  fluent-bit.conf: |
     [PARSER]
         Name   json
         Format json
