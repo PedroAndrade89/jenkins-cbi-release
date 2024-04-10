@@ -329,7 +329,8 @@ pipeline {
                                 ${env.KUBECTL_PATH}/kubectl apply -f fluent-bit-cm.yaml
                                 helm repo add fluent https://fluent.github.io/helm-charts
                                 helm repo update
-                                helm install fluent-bit fluent/fluent-bit --namespace logging -f fluent-bit-values.yaml
+                                helm install fluent-bit fluent/fluent-bit --namespace logging \
+                                --set configMaps.service="fluent-bit-cm" \
                               """
                         }
 
