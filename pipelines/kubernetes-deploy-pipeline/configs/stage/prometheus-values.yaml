@@ -1,12 +1,15 @@
 alertmanager:
+  enabled: true
   persistentVolume:
     enabled: true
     storageClass: "gp3-encrypted"
+    size: 10Gi
 
 server:
   persistentVolume:
     enabled: true
     storageClass: "gp3-encrypted"
+    size: 10Gi
 
   configMaps:
     prometheus-yml: prometheus-cm
