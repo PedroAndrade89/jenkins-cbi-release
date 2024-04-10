@@ -197,7 +197,11 @@ pipeline {
                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                         ],
-                        [sshUserPrivateKey(credentialsId: 'letsencrypt-stage', keyFileVariable: 'SSH_KEY')]
+                        [
+                            $class: 'SSHUserPrivateKeyBinding', // SSH private key binding
+                            credentialsId: 'letsencrypt-stage',
+                            keyFileVariable: 'SSH_KEY'
+                        ]
                     ]) {
                         sh "aws eks update-kubeconfig --name ${clusterName} --region ${params.region}"
 
