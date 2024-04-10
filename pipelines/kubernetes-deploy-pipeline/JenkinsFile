@@ -197,6 +197,8 @@ pipeline {
                     ]) {
                         sh "aws eks update-kubeconfig --name ${clusterName} --region ${params.region}"
 
+                        //Create storage class for encrypted gp3 volumes
+                        sh "${env.KUBECTL_PATH}/kubectl apply -f storage-class.yaml"
                         // CW Metrics and Container Insights setup
                         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-prerequisites.html
                         // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html
