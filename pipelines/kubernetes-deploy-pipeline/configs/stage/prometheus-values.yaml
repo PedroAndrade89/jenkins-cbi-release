@@ -6,6 +6,8 @@ server:
   persistentVolume:
     storageClass: "gp3"
 
+  configMaps:
+    prometheus-yml: prometheus-cm
   ingress:
     enabled: true
     hosts:
