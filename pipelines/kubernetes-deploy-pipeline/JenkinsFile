@@ -12,7 +12,6 @@ pipeline {
         booleanParam(name: 'metrics_server', defaultValue : true, description: "Setup k8s metrics-server?")
         booleanParam(name: 'dashboard', defaultValue : true, description: "Setup k8s dashboard?")
         booleanParam(name: 'prometheus', defaultValue : true, description: "Setup k8s prometheus?")
-        booleanParam(name: 'grafana', defaultValue : true, description: "Setup k8s grafana?")
         booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
         booleanParam(name: 'ca', defaultValue : true, description: "Setup k8s Cluster Autoscaler?")
         booleanParam(name: 'cert_manager', defaultValue : true, description: "Setup cert-manager for certificate handling?")
