@@ -1,0 +1,9 @@
+config:
+  service: fluent-bit.conf
+  customParsers: parsers.conf
+
+configMaps:
+  # Name of the existing ConfigMap containing Fluent Bit Service config
+  service: fluent-bit-cm
+  # Name of the existing ConfigMap containing Fluent Bit Parsers config
+  customParsers: fluent-bit-cm
