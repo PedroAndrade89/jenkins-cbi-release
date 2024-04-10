@@ -328,11 +328,10 @@ pipeline {
                                 helm repo update
                                 helm upgrade --install --atomic cert-manager jetstack/cert-manager --namespace cert-manager --set installCRDs=true --create-namespace
                                 sleep 30 # allow cert-manager setup in the cluster
-                                // Create Kubernetes Secret with the SSH private key
 
                                 ${env.KUBECTL_PATH}/kubectl create secret generic letsencrypt-staging --from-file=ssh-privatekey=\$SSH_KEY --namespace cert-manager
 
-                                // ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-stage.yaml
+                                ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-stage.yaml
                                 """
                         }
 
