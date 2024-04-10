@@ -196,7 +196,8 @@ pipeline {
                             credentialsId: 'jenkins-automate-user',
                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+                        ],
+                        [sshUserPrivateKey(credentialsId: 'letsencrypt-stage', keyFileVariable: 'SSH_KEY')]
                     ]) {
                         sh "aws eks update-kubeconfig --name ${clusterName} --region ${params.region}"
 
@@ -323,14 +324,9 @@ pipeline {
                                 helm repo update
                                 helm upgrade --install --atomic cert-manager jetstack/cert-manager --namespace cert-manager --set installCRDs=true --create-namespace
                                 sleep 30 # allow cert-manager setup in the cluster
-                                """
-                                // Retrieve SSH private key from Jenkins credentials
-                                sshPrivateKey = credentials('letsencrypt-stage')
-
                                 // Create Kubernetes Secret with the SSH private key
                                 echo "Creating Kubernetes Secret for SSH private key"
-                                sh """
-                                ${env.KUBECTL_PATH}/kubectl create secret generic letsencrypt-staging --from-literal=ssh-privatekey=\$sshPrivateKey --namespace cert-manager"
+                                ${env.KUBECTL_PATH}/kubectl create secret generic letsencrypt-staging --from-file=ssh-privatekey=\$SSH_KEY --namespace cert-manager"
                                 // Apply ClusterIssuer configurations
                                 // ${env.KUBECTL_PATH}/kubectl apply -f cluster-issuer-stage.yaml
                                 """
