@@ -1,2 +1,3 @@
 controller:
-  replicaCount: 2  # Specify the desired number of Nginx Ingress controller replicas
+  replicaCount: 2
+  onfigMapName: nginx-ingress-cm
