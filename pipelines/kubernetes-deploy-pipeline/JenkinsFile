@@ -325,6 +325,7 @@ pipeline {
                         if (params.fluent_bit == true) {
                             echo "Setting up fluent-bit to send logs to graylog"
                             sh """
+                                ${env.KUBECTL_PATH}/kubectl create ns logging
                                 ${env.KUBECTL_PATH}/kubectl apply -f fluent-bit-cm.yaml
                                 helm repo add fluent https://fluent.github.io/helm-charts
                                 helm repo update
