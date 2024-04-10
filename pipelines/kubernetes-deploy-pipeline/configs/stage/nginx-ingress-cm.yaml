@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-ingress-cm
+  name: nginx-ingress
   namespace: nginx-ingress  # Ensure this matches the namespace where Nginx Ingress is deployed
   labels:
     app: ingress-nginx
