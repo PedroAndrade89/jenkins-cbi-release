@@ -46,6 +46,9 @@ pipeline {
         stage('Initialize Environment Variables') {
             steps {
                 script {
+                    sh 'pwd'
+                    sh 'ls -lh'
+                    sh 'ls -lh ./'
                     env.DIR = ""
                     switch (env.BRANCH_NAME) {
                         case 'qa':
