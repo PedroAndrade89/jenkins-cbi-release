@@ -291,7 +291,7 @@ pipeline {
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
                                 ${env.KUBECTL_PATH}/kubectl apply -f nginx-ingress-cm.yaml
-                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress -f nginx-ingress-values.yaml
+                                helm upgrade --install --atomic nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress -f nginx-ingress-values.yaml
                                 ${env.KUBECTL_PATH}/kubectl apply -f nginx-ingress-proxy.yaml
                                 echo "Dns name of nginx ingress load balancer is below:"
                                 ${env.KUBECTL_PATH}/kubectl get svc --namespace=nginx-ingress
@@ -307,7 +307,7 @@ pipeline {
                                 ${env.KUBECTL_PATH}/kubectl apply -f prometheus-config-cm.yaml
                                 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
                                 helm repo update
-                                helm install prometheus prometheus-community/prometheus --namespace prometheus -f prometheus-values.yaml
+                                helm upgrade --install --atomic prometheus prometheus-community/prometheus --namespace prometheus -f prometheus-values.yaml
                               """
 
                               echo "To connect to prometheus, follow the instructions above, then connect to http://localhost:9090"
@@ -336,7 +336,7 @@ pipeline {
                                 ${env.KUBECTL_PATH}/kubectl apply -f fluent-bit-cm.yaml
                                 helm repo add fluent https://fluent.github.io/helm-charts
                                 helm repo update
-                                helm upgrade --install fluent-bit fluent/fluent-bit --namespace logging -f fluent-bit-values.yaml
+                                helm upgrade --install --atomic fluent-bit fluent/fluent-bit --namespace logging -f fluent-bit-values.yaml
                               """
                         }
 
