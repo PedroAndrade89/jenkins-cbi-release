@@ -286,7 +286,7 @@ pipeline {
                                 pwd
                                 helm repo add nginx-stable https://helm.nginx.com/stable
                                 helm repo update
-                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
+                                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace -f nginx-ingress-values.yaml
                                 ${env.KUBECTL_PATH}/kubectl apply -f nginx-ingress-proxy.yaml
                                 echo "Dns name of nginx ingress load balancer is below:"
                                 ${env.KUBECTL_PATH}/kubectl get svc --namespace=nginx-ingress
