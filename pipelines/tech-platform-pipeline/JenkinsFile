@@ -23,7 +23,7 @@ pipeline {
                 script{
                     echo 'Checking Dockerfile integrity...'
                     dockerfile = "Dockerfile"
-                    sh "/bin/hadolint -t error --ignore SC1072 ${dockerfile}"
+                    sh "/bin/hadolint -t error ${dockerfile}"
                 }
             }
         }
