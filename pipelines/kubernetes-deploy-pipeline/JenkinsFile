@@ -72,10 +72,10 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
-                        sh 'tflint --format=json > tflint-results.json'
-                        def tflintResults = readJSON file: 'tflint-results.json'
+                        sh 'tflint --format=json > terraform/environments/stage/tflint-results.json'
+                        def tflintResults = readJSON file: 'terraform/environments/stage/tflint-results.json'
                         if (tflintResults.errors.size() > 0) {
-                            archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
+                            archiveArtifacts artifacts: 'terraform/environments/stage/tflint-results.json', onlyIfSuccessful: false
                             error("TFLint reported errors.")
                         }
                     }
@@ -92,15 +92,15 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
-                        sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
-                        def tfsecResults = readJSON file: 'tfsec-results.json'
+                        sh 'tfsec . --format=json --soft-fail > terraform/environments/stage/tfsec-results.json'
+                        def tfsecResults = readJSON file: 'terraform/environments/stage/tfsec-results.json'
                         if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
-                            archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
+                            archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
                             error("Critical alerts found by TFSec.")
                         }
                     }
                 }
-                archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
+                archiveArtifacts artifacts: 'terraform/environments/stage/tfsec-results.json', onlyIfSuccessful: false
             }
         }
 
