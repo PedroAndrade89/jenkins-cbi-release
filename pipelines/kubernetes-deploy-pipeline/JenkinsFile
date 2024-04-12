@@ -80,7 +80,7 @@ pipeline {
                         }
                     }
                 }
-                archiveArtifacts artifacts: '${env.DIR}/tflint-results.json', onlyIfSuccessful: false
+                archiveArtifacts artifacts: "${env.DIR}/tflint-results.json", onlyIfSuccessful: false
             }
         }
 
@@ -100,7 +100,7 @@ pipeline {
                         }
                     }
                 }
-                archiveArtifacts artifacts: '${env.DIR}/tfsec-results.json', onlyIfSuccessful: false
+                archiveArtifacts artifacts: "${env.DIR}/tfsec-results.json", onlyIfSuccessful: false
             }
         }
 
