@@ -1,0 +1,147 @@
+pipeline {
+
+    parameters {
+            string(name: 'git_project_url', defaultValue : 'us-east-1', description: "AWS region.")
+            string(name: 'ecr_uri', defaultValue : '154396925587.dkr.ecr.us-east-1.amazonaws.com/tech_platform-app', description: "AWS region.")
+    }
+    agent {
+        label 'jenkins-slave'
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES') // Timeout for the entire pipeline
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "${env.BRANCH_NAME}", credentialsId: 'github-pedro', url: params.git_project_url
+            }
+        }
+
+        stage('Integrity Check') {
+            steps {
+                script{
+                    echo 'Checking Dockerfile integrity...'
+                    dockerfile = "Dockerfile"
+                    sh "/bin/hadolint -t error --ignore SC1072 ${dockerfile}"
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def buildTimeStamp = sh(returnStdout: true, script: "date -u '+%Y%m%dT%H%M%S'").trim()
+                    def commitHash = env.GIT_COMMIT
+                    def normalizedBranchName = env.BRANCH_NAME.replaceAll("/", "-").toLowerCase()
+                    tag = "${params.image_name}:${normalizedBranchName}.${buildTimeStamp}.${commitHash}".toLowerCase()
+
+                    docker_image = docker.build("${tag}", "-f ${dockerfile} .")
+
+                }
+            }
+        }
+
+        stage('Vulnerability Scanning') {
+            steps {
+                script {
+                    // Use Trivy to scan Docker image for vulnerabilities
+                    sh "trivy image -f json --output vulnerability-report.json ${tag}"
+                    def trivyReportJson = readFile 'vulnerability-report.json'
+                    def trivyReport = readJSON text: trivyReportJson
+
+                    // Initialize a list to collect high or critical vulnerabilities
+                    def criticalVulnerabilities = []
+
+                    // Iterate over each result in the Trivy report
+                    trivyReport.Results.each { result ->
+                        // Check if the result contains a 'Vulnerabilities' key and it's not null
+                        if (result.Vulnerabilities) {
+                            // Iterate over each vulnerability in the result
+                            result.Vulnerabilities.each { vulnerability ->
+                                if (vulnerability.Severity in ['HIGH', 'CRITICAL']) {
+                                    // Add high or critical vulnerabilities to the list
+                                    criticalVulnerabilities << vulnerability
+                                }
+                            }
+                        }
+                    }
+
+                    // Echo collected vulnerabilities
+                    if (criticalVulnerabilities.size() > 0) {
+                        echo "High or Critical Vulnerabilities Found:"
+                        criticalVulnerabilities.each { vulnerability ->
+                            echo "${vulnerability.VulnerabilityID} - ${vulnerability.Severity} - ${vulnerability.Title}"
+                        }
+                    } else {
+                        echo "No high or critical vulnerabilities found."
+                    }
+
+                    // Fail the build if any high or critical vulnerabilities are found
+                    if (criticalVulnerabilities.size() > 0) {
+                        currentBuild.result = 'FAILURE'
+                        error('New HIGH or CRITICAL vulnerabilities found! Check the Trivy report for details.')
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image to ECR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${params.ecr_uri}", 'ecr:us-east-1:jenkins-ecr-access') {
+                        docker_image.push()
+                    }
+                }
+            }
+        }
+//         stage('Deploy artifact to test') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Deploy artifact to test'
+//             }
+//         }
+//         stage('Perform test') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Perform test'
+//             }
+//         }
+//         stage('Validate exit criteria') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Validate exit criteria'
+//             }
+//         }
+//         stage('Deploy artifact to production') {
+//             when {
+//                 branch "main"
+//             }
+//             steps {
+//                 echo 'Stage: Deploy artifact to production'
+//             }
+//         }
+
+    }
+// Stage: Notify actors
+    post {
+        success {
+            echo 'Stage: Notify actors - success'
+        }
+        failure {
+            echo 'Stage: Notify actors - failure'
+        }
+        always {
+            archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: false
+        }
+    }
+}
+
+
+
+
+
