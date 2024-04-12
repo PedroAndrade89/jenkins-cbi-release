@@ -1,8 +1,8 @@
 pipeline {
 
     parameters {
-            string(name: 'git_project_url', defaultValue : 'git@github.com:PedroAndrade89/tech-platform-engineering.git', description: "AWS region.")
-            string(name: 'ecr_uri', defaultValue : '154396925587.dkr.ecr.us-east-1.amazonaws.com/tech_platform-app', description: "AWS region.")
+            string(name: 'git_project_url', defaultValue : 'git@github.com:PedroAndrade89/tech-platform-engineering.git', description: "Github Repo url")
+            string(name: 'ecr_uri', defaultValue : '154396925587.dkr.ecr.us-east-1.amazonaws.com/tech_platform-app', description: "AWS Container registry")
             string(name: 'BRANCH_NAME', defaultValue : 'main', description: "Github Repo branch")
     }
     agent {
