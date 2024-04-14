@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     env.DIR = ""
-                    switch (parms.environment) {
+                    switch (params.environment) {
                         case 'prod':
                             env.DIR = 'environments/prod'
                             break
