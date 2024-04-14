@@ -137,36 +137,31 @@ pipeline {
         stage('Run TFSec') {
             steps {
                 script {
-                     dir(env.DIR_STAGE) {
-                        // Run TFSec and output results to a file, capturing the exit code
-                        def tfsecExitCode = sh(script: 'tfsec . --format=json --soft-fail > tfsec-results.json', returnStatus: true)
+                     dir("${env.DIR}") {
+                         // Run TFSec and output results to a file, capturing the exit code
+                         def tfsecExitCode = sh(script: 'tfsec . --format=json  --tfvars-file terraform.tfvars --soft-fail > tfsec-results.json', returnStatus: true)
 
-                        // Check if the results file exists and read it if it does
-                        def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
+                         // Check if the results file exists and read it if it does
+                         def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
 
-                        // Log the tfsecResults to help with debugging
-                        echo "TFSec Results: ${tfsecResults}"
+                         // Check if results are not null and not empty
+                         if (tfsecResults && tfsecResults.results != null) {
+                             if (tfsecResults.results instanceof List && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                                 archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
+                                 error("Critical alerts found by TFSec.")
+                             } else {
+                                 echo "No critical alerts or results are empty."
+                             }
+                         } else {
+                             echo "TFSec results are null or in an unexpected format."
+                         }
 
-                        // Check if results are not null and not empty
-                        if (tfsecResults?.results) {
-                            // Check for critical severity issues in the results
-                            if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
-                                archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
-                                error("Critical alerts found by TFSec.")
-                            } else {
-                                echo "No critical alerts found by TFSec."
-                            }
-                        } else {
-                            echo "No results or empty results found in TFSec output."
-                        }
+                         // Handle cases where TFSec may fail without producing a valid JSON output
+                         if (tfsecExitCode != 0) {
+                             error("TFSec failed with exit code: ${tfsecExitCode} and possibly no valid results were produced.")
+                         }
+                     }
 
-                        // Handle cases where TFSec may fail without producing a valid JSON output
-                        if (tfsecExitCode != 0 && tfsecResults == null) {
-                            error("TFSec failed with exit code: ${tfsecExitCode} and no valid results were produced.")
-                        } else if (tfsecExitCode != 0) {
-                            echo "TFSec completed with non-zero exit code: ${tfsecExitCode} but did not produce critical alerts."
-                        }
-                    }
 
                     // Archive the artifacts outside the dir block but within script block
                     archiveArtifacts artifacts: "${env.DIR_STAGE}/tfsec-results.json", onlyIfSuccessful: false
