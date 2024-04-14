@@ -1,0 +1,184 @@
+def clusterName
+
+pipeline {
+    parameters {
+        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
+        string(name: 'environment', defaultValue : 'stage',choices: 'stage\nprod\n', description: "AWS region.")
+
+    }
+
+    options {
+        disableConcurrentBuilds()
+        timeout(time: 40, unit: 'MINUTES')
+    }
+
+    agent {
+        label 'jenkins-slave'
+    }
+
+    stages {
+
+
+        stage('Initialize virtual Environment') {
+            steps{
+                script{
+                    sh 'source ~/ansible_env/bin/activate'
+                }
+            }
+        }
+
+        stage('Initialize Environment Variables') {
+            steps {
+                script {
+                    env.DIR = ""
+                    switch (env.BRANCH_NAME) {
+                        case 'main':
+                            env.DIR = 'environments/prod'
+                            break
+                        case 'stage':
+                            env.DIR = 'environments/stage'
+                            break
+                        default:
+                            error "Unknown branch name: ${env.BRANCH_NAME}"
+                    }
+                }
+            }
+        }
+
+        stage('Run TFLint') {
+            when {
+                expression { params.action == 'create' }
+            }
+            steps {
+                script {
+                    dir("${env.DIR}") {
+                        sh 'tflint --format=json > tflint-results.json'
+                        def tflintResults = readJSON file: 'tflint-results.json'
+                        if (tflintResults.errors.size() > 0) {
+                            archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
+                            error("TFLint reported errors.")
+                        }
+                    }
+                }
+                archiveArtifacts artifacts: "${env.DIR}/tflint-results.json", onlyIfSuccessful: false
+            }
+        }
+
+        stage('Run TFSec') {
+            when {
+                expression { params.action == 'create' }
+            }
+            steps {
+                script {
+                    dir("${env.DIR}") {
+                        sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
+                        def tfsecResults = readJSON file: 'tfsec-results.json'
+                        if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                            archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
+                            error("Critical alerts found by TFSec.")
+                        }
+                    }
+                }
+                archiveArtifacts artifacts: "${env.DIR}/tfsec-results.json", onlyIfSuccessful: false
+            }
+        }
+
+        stage('TF Validate') {
+            when {
+                expression { params.action == 'create' }
+            }
+            steps {
+                script {
+                    dir(env.DIR) {
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'jenkins-automate-user',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            sh """
+                                terraform init
+                                terraform validate
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('TF Apply') {
+            when {
+                expression { params.action == 'create' }
+            }
+            steps {
+                dir(env.DIR) {
+                    script {
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'jenkins-automate-user',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            sh """
+                            terraform plan \
+                               -var eks_version=${params.eks_version} \
+                               -var region=${params.region} \
+                               -out=plan.out
+                            """
+                            if (env.BRANCH_NAME == "main") {
+                                input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
+                                sh 'terraform apply plan.out'
+                            }
+                            else {
+                                sh 'terraform apply -input=false -auto-approve plan.out '
+                            }
+
+                            // Get Terraform outputs
+                            outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
+                            echo "Terraform Outputs: ${outputJson}"
+                            def outputs = readJSON text: outputJson
+                            clusterName = outputs.cluster_name.value
+                        }
+                    }
+                }
+            }
+        }
+
+       stage('TF Destroy') {
+            when {
+                expression { params.action == 'destroy' }
+            }
+            steps {
+                dir(env.DIR) {
+                    script {
+                        input "Destroy Terraform stack ${params.cluster} in AWS?"
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'jenkins-automate-user',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            sh """
+                              terraform init
+                              terraform plan -out=plan.out
+                              terraform destroy -auto-approve
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
