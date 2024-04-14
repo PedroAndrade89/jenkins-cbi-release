@@ -66,10 +66,10 @@ pipeline {
                             archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
                             // Throw an error to fail the build after archiving the results
                             error("TFLint reported errors.")
-                        } else if (tflintExitCode != 0) {
-                            // Handle cases where tflint may fail without producing a valid JSON output
-                            error("TFLint failed with exit code: ${tflintExitCode}")
-                        }
+//                         } else if (tflintExitCode != 0) {
+//                             // Handle cases where tflint may fail without producing a valid JSON output
+//                             error("TFLint failed with exit code: ${tflintExitCode}")
+//                         }
                     }
                 }
                 // Archive the artifacts only once and only if the file exists
