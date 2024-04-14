@@ -56,14 +56,24 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
-                        sh 'tflint --format=json'
-                        sh 'tflint --format=json > tflint-results.json'
+                        // Run tflint and write results to a file, capturing exit code without failing immediately
+                        def tflintExitCode = sh(script: 'tflint --format=json > tflint-results.json', returnStatus: true)
+                        // Read the JSON results file
                         def tflintResults = readJSON file: 'tflint-results.json'
+                        // Check if there are errors
                         if (tflintResults.errors.size() > 0) {
+                            // Archive the results file even if there were errors
                             archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
+                            // Throw an error to fail the build after archiving the results
                             error("TFLint reported errors.")
                         }
+                          // Optionally, handle the case where tflint succeeded
+                        if (tflintExitCode == 1) {
+                            error("TFLint reported errors.")
+                        }
+
                     }
+
                 }
                 archiveArtifacts artifacts: "${env.DIR}/tflint-results.json", onlyIfSuccessful: false
             }
@@ -76,11 +86,15 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
-                        sh 'tfsec . --format=json --soft-fail > tfsec-results.json'
+                        def tflintExitCode = sh(script: 'tfsec . --format=json --soft-fail > tfsec-results.json', returnStatus: true)
                         def tfsecResults = readJSON file: 'tfsec-results.json'
                         if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
                             archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
                             error("Critical alerts found by TFSec.")
+                        }
+                          // Optionally, handle the case where tflint succeeded
+                        if (tflintExitCode == 1) {
+                            error("Tfsec reported errors.")
                         }
                     }
                 }
