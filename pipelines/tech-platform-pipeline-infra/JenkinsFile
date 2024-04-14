@@ -85,20 +85,26 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
+                        // Run TFSec and output results to a file, capturing the exit code
                         def tfsecExitCode = sh(script: 'tfsec . --format=json --soft-fail > tfsec-results.json', returnStatus: true)
+
+                        // Check if the results file exists and read it if it does
                         def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
+
+                        // Check for critical severity issues in the results
                         if (tfsecResults && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
                             archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
                             error("Critical alerts found by TFSec.")
                         }
 
-                        } else if (tfsecExitCode != 0) {
-                            // Handle cases where tflint may fail without producing a valid JSON output
-                            error("Tfsec failed with exit code: ${tfsecExitCode}")
+                        // Handle cases where TFSec may fail without producing a valid JSON output
+                        if (tfsecExitCode != 0 && tfsecResults == null) {
+                            error("TFSec failed with exit code: ${tfsecExitCode}")
                         }
                     }
+                    // Archive the artifacts outside the dir block but within script block
+                    archiveArtifacts artifacts: "${env.DIR}/tfsec-results.json", onlyIfSuccessful: false
                 }
-                archiveArtifacts artifacts: "${env.DIR}/tfsec-results.json", onlyIfSuccessful: false
             }
         }
 
