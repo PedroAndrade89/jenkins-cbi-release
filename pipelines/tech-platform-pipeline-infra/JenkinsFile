@@ -31,17 +31,21 @@ pipeline {
             steps {
                 script {
                     env.DIR = ""
-                    switch (env.BRANCH_NAME) {
-                        case 'main':
+                    switch (parms.environment) {
+                        case 'prod':
                             env.DIR = 'environments/prod'
                             break
                         case 'stage':
                             env.DIR = 'environments/stage'
                             break
-                        default:
-                            error "Unknown branch name: ${env.BRANCH_NAME}"
                     }
                 }
+            }
+        }
+
+        stage('Checkout Configs') {
+            steps {
+                git branch: "main", credentialsId: 'github-pedro', url: "git@github.com:PedroAndrade89/tech-platform-iac.git"
             }
         }
 
@@ -124,10 +128,7 @@ pipeline {
                             ]
                         ]) {
                             sh """
-                            terraform plan \
-                               -var eks_version=${params.eks_version} \
-                               -var region=${params.region} \
-                               -out=plan.out
+                            terraform plan -out=plan.out
                             """
                             if (env.BRANCH_NAME == "main") {
                                 input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
