@@ -2,8 +2,8 @@ def clusterName
 
 pipeline {
     parameters {
-        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
-        choice(name: 'environment', choices: 'stage\nprod\n', description: "AWS region.")
+        choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the ECS cluster.')
+        choice(name: 'environment', choices: 'stage\nprod\n', description: "Environment type")
 
     }
 
