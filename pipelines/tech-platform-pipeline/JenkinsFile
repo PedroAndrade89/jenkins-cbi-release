@@ -145,7 +145,7 @@ pipeline {
                         def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
 
                         // Check for critical severity issues in the results
-                        if (tfsecResults && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                        if (tfsecResults && tfsecResults.results != null && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
                             archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
                             error("Critical alerts found by TFSec.")
                         }
