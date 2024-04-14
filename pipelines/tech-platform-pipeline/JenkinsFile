@@ -98,25 +98,10 @@ pipeline {
                 }
             }
         }
-        stage('Initialize terraform dir Environment Variables') {
-            steps {
-                script {
-                    env.DIR = ""
-                    switch (params.environment) {
-                        case 'prod':
-                            env.DIR = 'terraform/environments/prod'
-                            break
-                        case 'stage':
-                            env.DIR = 'terraform/environments/stage'
-                            break
-                    }
-                }
-            }
-        }
         stage('Run TFLint') {
             steps {
                 script {
-                    dir("${env.DIR}") {
+                    dir("terraform/environments/stage") {
                         // Run tflint and write results to a file, capturing exit code without failing immediately
                         def tflintExitCode = sh(script: 'tflint --format=json > tflint-results.json', returnStatus: true)
 
@@ -143,7 +128,7 @@ pipeline {
         stage('Run TFSec') {
             steps {
                 script {
-                    dir("${env.DIR}") {
+                    dir("terraform/environments/stage") {
                         // Run TFSec and output results to a file, capturing the exit code
                         def tfsecExitCode = sh(script: 'tfsec . --format=json --tfvars-file terraform.tfvars --soft-fail > tfsec-results.json', returnStatus: true)
 
@@ -168,12 +153,9 @@ pipeline {
         }
 
         stage('TF Validate') {
-            when {
-                expression { params.action == 'create' }
-            }
             steps {
                 script {
-                    dir(env.DIR) {
+                    dir("terraform/environments/stage") {
                         withCredentials([
                             [
                                 $class: 'AmazonWebServicesCredentialsBinding',
@@ -194,7 +176,7 @@ pipeline {
 
         stage('TF Apply - Deploy to Stage') {
             steps {
-                dir(env.DIR) {
+                dir("terraform/environments/stage") {
                     script {
                         withCredentials([
                             [
