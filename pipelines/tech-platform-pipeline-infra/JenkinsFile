@@ -56,6 +56,7 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
+                        sh 'tflint --format=json'
                         sh 'tflint --format=json > tflint-results.json'
                         def tflintResults = readJSON file: 'tflint-results.json'
                         if (tflintResults.errors.size() > 0) {
