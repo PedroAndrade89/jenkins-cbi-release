@@ -59,8 +59,8 @@ pipeline {
                         // Run tflint and write results to a file, capturing exit code without failing immediately
                         def tflintExitCode = sh(script: 'tflint --format=json > tflint-results.json', returnStatus: true)
 
-                        // Read the JSON results file and check for errors
-                        def tflintResults = fileExists('tflint-results.json') ? readJSON file: 'tflint-results.json' : null
+                        // Check if the file exists before trying to read it
+                        def tflintResults = fileExists('tflint-results.json') ? readJSON(file: 'tflint-results.json') : null
                         if (tflintResults && tflintResults.errors.size() > 0) {
                             // Archive the results file even if there were errors
                             archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
