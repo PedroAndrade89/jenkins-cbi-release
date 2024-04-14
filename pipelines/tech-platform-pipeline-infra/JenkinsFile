@@ -163,8 +163,8 @@ pipeline {
                             // Get Terraform outputs
                             outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
                             echo "Terraform Outputs: ${outputJson}"
-                            def outputs = readJSON text: outputJson
-                            clusterName = outputs.cluster_name.value
+//                             def outputs = readJSON text: outputJson
+//                             clusterName = outputs.cluster_name.value
                         }
                     }
                 }
