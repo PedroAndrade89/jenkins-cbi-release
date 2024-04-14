@@ -204,7 +204,7 @@ pipeline {
                             ]
                         ]) {
                             sh """
-                            terraform plan -var app_services.ecs_task_container_image=${ecr_uri}/${tag} -out=plan.out
+                            terraform plan -var ecs_task_container_image=${ecr_uri}/${tag} -out=plan.out
                             """
                             if (env.BRANCH_NAME == "main") {
                                 input message: 'Do you want to apply the Terraform plan?', ok: 'Yes'
