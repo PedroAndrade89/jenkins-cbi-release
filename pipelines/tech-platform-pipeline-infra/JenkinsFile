@@ -85,11 +85,16 @@ pipeline {
             steps {
                 script {
                     dir("${env.DIR}") {
-                        def tflintExitCode = sh(script: 'tfsec . --format=json --soft-fail > tfsec-results.json', returnStatus: true)
-                        def tfsecResults = readJSON file: 'tfsec-results.json'
-                        if (tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                        def tfsecExitCode = sh(script: 'tfsec . --format=json --soft-fail > tfsec-results.json', returnStatus: true)
+                        def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
+                        if (tfsecResults && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
                             archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
                             error("Critical alerts found by TFSec.")
+                        }
+
+                        } else if (tfsecExitCode != 0) {
+                            // Handle cases where tflint may fail without producing a valid JSON output
+                            error("Tfsec failed with exit code: ${tfsecExitCode}")
                         }
                     }
                 }
