@@ -229,6 +229,8 @@ pipeline {
                     if (env.appUrl == null || env.appUrl.isEmpty()) {
                         error('appUrl is not set or empty. Cannot proceed with Selenium tests.')
                     } else {
+
+                        sh 'python --version'
                         // Run the Python Selenium script with appUrl
                         def exitCode = sh(script: "python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
 
