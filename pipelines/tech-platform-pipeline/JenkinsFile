@@ -142,7 +142,7 @@ pipeline {
         stage('Run TFSec') {
             steps {
                 script {
-                     dir("${env.DIR}") {
+                     dir(env.DIR_STAGE) {
                          // Run TFSec and output results to a file, capturing the exit code
                          def tfsecExitCode = sh(script: 'tfsec . --format=json  --tfvars-file terraform.tfvars --soft-fail > tfsec-results.json', returnStatus: true)
 
