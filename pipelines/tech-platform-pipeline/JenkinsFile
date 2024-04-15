@@ -238,9 +238,9 @@ pipeline {
                         error('appUrl is not set or empty. Cannot proceed with Selenium tests.')
                     } else {
 
-                        sh 'python --version'
+                        sh '~/ansible_env/bin/python --version'
                         // Run the Python Selenium script with appUrl
-                        def exitCode = sh(script: "python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
+                        def exitCode = sh(script: "~/ansible_env/bin/python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
 
                         if (exitCode == 0) {
                             echo 'Tests passed successfully.'
