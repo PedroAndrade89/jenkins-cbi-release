@@ -212,8 +212,9 @@ pipeline {
                             // Get Terraform outputs
                             outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
                             def outputs = readJSON text: outputJson
-                            appUrl = outputs.lb_dns_name.value
-                            echo "Terraform Outputs: ${outputJson}"
+                            // Set appUrl in the Jenkins environment
+                            env.appUrl = outputs.lb_dns_name.value
+                            echo "Application URL: ${env.appUrl}"
 
                         }
                     }
@@ -224,22 +225,25 @@ pipeline {
         stage('Selenium Test') {
             steps {
                 script {
-                    // Pass the URL as a command-line argument
-                    sh 'pwd'
-                    sh 'ls -lh'
-
-                    def exitCode = sh(script: "python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
-
-                    if (exitCode == 0) {
-                        echo 'Tests passed successfully.'
-                    } else if (exitCode == 1) {
-                        error('Tests failed based on conditions.')
+                    // Check if appUrl has been set and is not null
+                    if (env.appUrl == null || env.appUrl.isEmpty()) {
+                        error('appUrl is not set or empty. Cannot proceed with Selenium tests.')
                     } else {
-                        error('Error occurred during tests.')
+                        // Run the Python Selenium script with appUrl
+                        def exitCode = sh(script: "python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
+
+                        if (exitCode == 0) {
+                            echo 'Tests passed successfully.'
+                        } else if (exitCode == 1) {
+                            error('Tests failed based on conditions.')
+                        } else {
+                            error('Error occurred during tests.')
+                        }
                     }
                 }
             }
         }
+
 
 
 //         stage('Perform test') {
