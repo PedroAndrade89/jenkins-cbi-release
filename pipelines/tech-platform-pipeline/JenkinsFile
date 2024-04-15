@@ -240,7 +240,7 @@ pipeline {
 
                         sh '~/ansible_env/bin/python --version'
                         // Run the Python Selenium script with appUrl
-                        def exitCode = sh(script: "~/ansible_env/bin/python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
+                        def exitCode = sh(script: "~/ansible_env/bin/python testing/check_room_status.py http://${env.appUrl}", returnStatus: true)
 
                         if (exitCode == 0) {
                             echo 'Tests passed successfully.'
