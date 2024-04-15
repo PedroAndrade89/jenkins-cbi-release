@@ -228,7 +228,7 @@ pipeline {
                     sh 'pwd'
                     sh 'ls -lh'
 
-                    def exitCode = sh(script: "python check_room_status.py ${env.appUrl}", returnStatus: true)
+                    def exitCode = sh(script: "python testing/check_room_status.py ${env.appUrl}", returnStatus: true)
 
                     if (exitCode == 0) {
                         echo 'Tests passed successfully.'
