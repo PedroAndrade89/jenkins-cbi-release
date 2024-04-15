@@ -131,10 +131,6 @@ pipeline {
                             // Throw an error to fail the build after archiving the results
                             error("TFLint reported errors.")
                         }
-//                         } else if (tflintExitCode != 0) {
-//                             // Handle cases where tflint may fail without producing a valid JSON output
-//                             error("TFLint failed with exit code: ${tflintExitCode}")
-//                         }
                     }
                 }
                 // Archive the artifacts only once and only if the file exists
@@ -178,7 +174,7 @@ pipeline {
             }
         }
 
-        stage('TF Validate') {
+        stage('TF Validate Stage') {
             steps {
                 script {
                     dir(env.DIR_STAGE) {
@@ -238,7 +234,6 @@ pipeline {
                         error('appUrl is not set or empty. Cannot proceed with Selenium tests.')
                     } else {
 
-                        sh '~/ansible_env/bin/python --version'
                         // Run the Python Selenium script with appUrl
                         def exitCode = sh(script: "~/ansible_env/bin/python testing/check_room_status.py http://${env.appUrl}", returnStatus: true)
 
@@ -254,33 +249,57 @@ pipeline {
             }
         }
 
+        stage('TF Validate Prod') {
+                    steps {
+                        script {
+                            dir(env.DIR_PROD) {
+                                withCredentials([
+                                    [
+                                        $class: 'AmazonWebServicesCredentialsBinding',
+                                        credentialsId: 'jenkins-aws-user',
+                                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                                    ]
+                                ]) {
+                                    sh """
+                                        terraform init
+                                        terraform validate
+                                    """
+                                }
+                            }
+                        }
+                    }
+        }
 
+        stage('TF Apply - Deploy to Prod') {
+            steps {
+                dir(env.DIR_PROD) {
+                    script {
+                        withCredentials([
+                            [
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'jenkins-aws-user',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]
+                        ]) {
+                            sh """
+                            terraform plan -var ecs_task_container_image=${ecr_uri}/${tag} -out=plan.out
+                            terraform apply -input=false -auto-approve plan.out
+                            """
 
-//         stage('Perform test') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Perform test'
-//             }
-//         }
-//         stage('Validate exit criteria') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Validate exit criteria'
-//             }
-//         }
-//         stage('Deploy artifact to production') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Deploy artifact to production'
-//             }
-//         }
+                            // Get Terraform outputs
+                            outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
+                            def outputs = readJSON text: outputJson
+                            // Set appUrl in the Jenkins environment
+                            env.appUrl = outputs.lb_dns_name.value
+                            echo "Application URL: ${env.appUrl}"
 
+                        }
+                    }
+                }
+            }
+        }
     }
 // Stage: Notify actors
     post {
@@ -291,7 +310,7 @@ pipeline {
             echo 'Stage: Notify actors - failure'
         }
         always {
-            archiveArtifacts artifacts: 'vulnerability-report.json', onlyIfSuccessful: false
+            cleanWs()
         }
     }
 }
