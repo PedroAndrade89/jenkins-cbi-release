@@ -225,6 +225,9 @@ pipeline {
             steps {
                 script {
                     // Pass the URL as a command-line argument
+                    sh 'pwd'
+                    sh 'ls -lh'
+
                     def exitCode = sh(script: "python check_room_status.py ${env.appUrl}", returnStatus: true)
 
                     if (exitCode == 0) {
