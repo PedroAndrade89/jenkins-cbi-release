@@ -1,3 +1,4 @@
+def appUrl
 pipeline {
 
     parameters {
@@ -210,6 +211,8 @@ pipeline {
 
                             // Get Terraform outputs
                             outputJson = sh(script: 'terraform output -json', returnStdout: true).trim()
+                            def outputs = readJSON text: outputJson
+                            appUrl = outputs.lb_dns_name.value
                             echo "Terraform Outputs: ${outputJson}"
 
                         }
@@ -217,14 +220,25 @@ pipeline {
                 }
             }
         }
-//         stage('Deploy artifact to test') {
-//             when {
-//                 branch "main"
-//             }
-//             steps {
-//                 echo 'Stage: Deploy artifact to test'
-//             }
-//         }
+
+        stage('Selenium Test') {
+            steps {
+                script {
+                    // Pass the URL as a command-line argument
+                    def exitCode = sh(script: "python check_room_status.py ${env.appUrl}", returnStatus: true)
+
+                    if (exitCode == 0) {
+                        echo 'Tests passed successfully.'
+                    } else if (exitCode == 1) {
+                        error('Tests failed based on conditions.')
+                    } else {
+                        error('Error occurred during tests.')
+                    }
+                }
+            }
+        }
+
+
 //         stage('Perform test') {
 //             when {
 //                 branch "main"
