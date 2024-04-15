@@ -20,6 +20,14 @@ pipeline {
             }
         }
 
+        stage('Initialize virtual Environment') {
+            steps{
+                script{
+                    sh 'source ~/ansible_env/bin/activate'
+                }
+            }
+        }
+
         stage('Integrity Check') {
             steps {
                 script{
