@@ -267,7 +267,7 @@ pipeline {
                     }
                 }
                 // Archive the artifacts only once and only if the file exists
-                archiveArtifacts artifacts: "${env.DIR_STAGE}/tflint-results-prod.json", onlyIfSuccessful: false
+                archiveArtifacts artifacts: "${env.DIR_PROD}/tflint-results-prod.json", onlyIfSuccessful: false
             }
         }
 
@@ -302,7 +302,7 @@ pipeline {
 
 
                     // Archive the artifacts outside the dir block but within script block
-                    archiveArtifacts artifacts: "${env.DIR_STAGE}/tfsec-results-prod.json", onlyIfSuccessful: false
+                    archiveArtifacts artifacts: "${env.DIR_PROD}/tfsec-results-prod.json", onlyIfSuccessful: false
                 }
             }
         }
