@@ -219,7 +219,7 @@ pipeline {
                             // Set appUrl in the Jenkins environment
                             env.appUrl = outputs.lb_dns_name.value
                             echo "Application URL: ${env.appUrl}"
-                            sleep 10
+                            sleep 30
                         }
                     }
                 }
