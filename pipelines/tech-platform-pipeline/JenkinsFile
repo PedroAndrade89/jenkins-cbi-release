@@ -116,43 +116,43 @@ pipeline {
                 }
             }
         }
-        stage('Run TFLint') {
+        stage('Run TFLint Stage') {
             steps {
                 script {
                     dir(env.DIR_STAGE) {
                         // Run tflint and write results to a file, capturing exit code without failing immediately
-                        def tflintExitCode = sh(script: 'tflint --format=json > tflint-results.json', returnStatus: true)
+                        def tflintExitCode = sh(script: 'tflint --format=json > tflint-results-stage.json', returnStatus: true)
 
                         // Check if the file exists before trying to read it
-                        def tflintResults = fileExists('tflint-results.json') ? readJSON(file: 'tflint-results.json') : null
+                        def tflintResults = fileExists('tflint-results-stage.json') ? readJSON(file: 'tflint-results-stage.json') : null
                         if (tflintResults && tflintResults.errors.size() > 0) {
                             // Archive the results file even if there were errors
-                            archiveArtifacts artifacts: 'tflint-results.json', onlyIfSuccessful: false
+                            archiveArtifacts artifacts: 'tflint-results-stage.json', onlyIfSuccessful: false
                             // Throw an error to fail the build after archiving the results
                             error("TFLint reported errors.")
                         }
                     }
                 }
                 // Archive the artifacts only once and only if the file exists
-                archiveArtifacts artifacts: "${env.DIR_STAGE}/tflint-results.json", onlyIfSuccessful: false
+                archiveArtifacts artifacts: "${env.DIR_STAGE}/tflint-results-stage.json", onlyIfSuccessful: false
             }
         }
 
 
-        stage('Run TFSec') {
+        stage('Run TFSec Stage') {
             steps {
                 script {
                      dir(env.DIR_STAGE) {
                          // Run TFSec and output results to a file, capturing the exit code
-                         def tfsecExitCode = sh(script: 'tfsec . --format=json  --tfvars-file terraform.tfvars --soft-fail > tfsec-results.json', returnStatus: true)
+                         def tfsecExitCode = sh(script: 'tfsec . --format=json  --tfvars-file terraform.tfvars --soft-fail > tfsec-results-stage.json', returnStatus: true)
 
                          // Check if the results file exists and read it if it does
-                         def tfsecResults = fileExists('tfsec-results.json') ? readJSON(file: 'tfsec-results.json') : null
+                         def tfsecResults = fileExists('tfsec-results-stage.json') ? readJSON(file: 'tfsec-results-stage.json') : null
 
                          // Check if results are not null and not empty
                          if (tfsecResults && tfsecResults.results != null) {
                              if (tfsecResults.results instanceof List && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
-                                 archiveArtifacts artifacts: 'tfsec-results.json', onlyIfSuccessful: false
+                                 archiveArtifacts artifacts: 'tfsec-results-stage.json', onlyIfSuccessful: false
                                  error("Critical alerts found by TFSec.")
                              } else {
                                  echo "No critical alerts or results are empty."
@@ -169,7 +169,7 @@ pipeline {
 
 
                     // Archive the artifacts outside the dir block but within script block
-                    archiveArtifacts artifacts: "${env.DIR_STAGE}/tfsec-results.json", onlyIfSuccessful: false
+                    archiveArtifacts artifacts: "${env.DIR_STAGE}/tfsec-results-stage.json", onlyIfSuccessful: false
                 }
             }
         }
@@ -245,6 +245,64 @@ pipeline {
                             error('Error occurred during tests.')
                         }
                     }
+                }
+            }
+        }
+
+        stage('Run TFLint Prod') {
+            steps {
+                script {
+                    dir(env.DIR_PROD) {
+                        // Run tflint and write results to a file, capturing exit code without failing immediately
+                        def tflintExitCode = sh(script: 'tflint --format=json > tflint-results-prod.json', returnStatus: true)
+
+                        // Check if the file exists before trying to read it
+                        def tflintResults = fileExists('tflint-results.json') ? readJSON(file: 'tflint-results-prod.json') : null
+                        if (tflintResults && tflintResults.errors.size() > 0) {
+                            // Archive the results file even if there were errors
+                            archiveArtifacts artifacts: 'tflint-results-prod.json', onlyIfSuccessful: false
+                            // Throw an error to fail the build after archiving the results
+                            error("TFLint reported errors.")
+                        }
+                    }
+                }
+                // Archive the artifacts only once and only if the file exists
+                archiveArtifacts artifacts: "${env.DIR_STAGE}/tflint-results-prod.json", onlyIfSuccessful: false
+            }
+        }
+
+
+        stage('Run TFSec Prod') {
+            steps {
+                script {
+                     dir(env.DIR_PROD) {
+                         // Run TFSec and output results to a file, capturing the exit code
+                         def tfsecExitCode = sh(script: 'tfsec . --format=json  --tfvars-file terraform.tfvars --soft-fail > tfsec-results-prod.json', returnStatus: true)
+
+                         // Check if the results file exists and read it if it does
+                         def tfsecResults = fileExists('tfsec-results-prod.json') ? readJSON(file: 'tfsec-results-prod.json') : null
+
+                         // Check if results are not null and not empty
+                         if (tfsecResults && tfsecResults.results != null) {
+                             if (tfsecResults.results instanceof List && tfsecResults.results.any { result -> result.severity == "CRITICAL" }) {
+                                 archiveArtifacts artifacts: 'tfsec-results-prod.json', onlyIfSuccessful: false
+                                 error("Critical alerts found by TFSec.")
+                             } else {
+                                 echo "No critical alerts or results are empty."
+                             }
+                         } else {
+                             echo "TFSec results are null or in an unexpected format."
+                         }
+
+                         // Handle cases where TFSec may fail without producing a valid JSON output
+                         if (tfsecExitCode != 0) {
+                             error("TFSec failed with exit code: ${tfsecExitCode} and possibly no valid results were produced.")
+                         }
+                     }
+
+
+                    // Archive the artifacts outside the dir block but within script block
+                    archiveArtifacts artifacts: "${env.DIR_STAGE}/tfsec-results-prod.json", onlyIfSuccessful: false
                 }
             }
         }
